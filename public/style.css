@@ -1,0 +1,184 @@
+.player.self {
+    font-weight: bold;
+}
+
+.player.ready {
+    background: #e2f0c4;
+}
+
+.player.current:before {
+    content: "➜ ";
+    line-height: 0;
+}
+
+.player.offline {
+    color: #adadad;
+}
+
+.host-controls {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    padding: 6px;
+    background: rgba(255, 252, 245, 0.58);
+    user-select: none;
+    cursor: default;
+    text-align: right;
+    z-index: 1;
+}
+
+.host-controls-menu {
+    display: none;
+    margin-bottom: 9px;
+}
+
+.host-controls:hover .host-controls-menu {
+    display: block;
+}
+
+.settings-button {
+    cursor: pointer;
+}
+
+.settings-button:hover {
+    background: #d4d4d4;
+}
+
+.side-buttons {
+    display: none;
+}
+
+.host-controls:hover .side-buttons {
+    display: inline-block;
+}
+
+.player-container {
+    display: flex;
+    border: 1px solid gainsboro;
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+    margin: 5px;
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.notebook {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+#avatar-input {
+    display: none;
+}
+
+.avatar {
+    width: 190px;
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.player {
+    padding: 3px;
+    user-select: none;
+}
+
+#background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #0e0e0e url(background.jpg) center no-repeat;
+    background-size: cover;
+    filter: blur(0) brightness(1);
+    transition: filter 2s;
+    z-index: -1;
+}
+
+#background.blurred {
+    filter: blur(5px) brightness(0.8);
+}
+
+body {
+    margin: 0;
+    background: black;
+}
+
+.kicked {
+    color: white;
+    padding: 22px;
+    text-align: center;
+}
+
+.spectators-section {
+    display: none;
+    text-align: center;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+}
+
+.spectators-section.active {
+    display: block;
+}
+
+.spectators {
+    display: inline-block;
+    padding: 6px;
+    cursor: pointer;
+    background: rgba(255, 252, 245, 0.58);
+    user-select: none;
+    white-space: nowrap;
+    height: 20px;
+}
+
+.spectators .player {
+    display: inline-block;
+    margin: 0 4px;
+    padding: 0;
+}
+
+.player-host-controls {
+    display: none;
+    vertical-align: middle;
+}
+
+.player-host-controls > * {
+    margin-left: 5px;
+}
+
+.player:hover .player-host-controls, .command:hover .player-host-controls {
+    display: inline-block;
+}
+
+.player .host-button, .command .host-button {
+    font-size: 16px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.join-players-button {
+    z-index: 1;
+    font-size: 40px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    padding: 84px;
+    background: #a7a7a740;
+    margin: 5px;
+    padding-top: 90px;
+}
+
+.set-avatar-button, .show-notes-button {
+    display: none;
+}
+
+.set-avatar-button i, .show-notes-button i {
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: #4c4c4c;
+    background: rgba(255, 255, 255, 0.74);
+    z-index: 2;
+}
