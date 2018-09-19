@@ -51,7 +51,9 @@ function init(wsServer, path) {
                     commonTime: 120,
                     personTime: 60,
                     witnessTime: 30,
+                    time: null,
                     timed: true,
+                    paused: true,
                     phase: 0,
                     round: 1,
                     master: null,
@@ -70,6 +72,7 @@ function init(wsServer, path) {
                     clue: null,
                     crimePlan: null
                 },
+
                 deckState = {
                     weapon: [],
                     clue: [],
@@ -89,29 +92,37 @@ function init(wsServer, path) {
                 sendState = (user) => {
                     const slot = room.playerSlots.indexOf(user);
                     if (room.phase === 0 || room.master === slot)
-                        send(user, "player", state);
+                        send(user, "player-state", state);
                     else if (room.phase === 5 || state.murderer === slot || state.assistant === slot)
-                        send(user, "player", {...state, witness: null});
+                        send(user, "player-state", {...state, witness: null});
                     else if (state.witness === slot)
-                        send(user, "player", {suspects: shuffleArray([state.murderer, state.assistant])});
+                        send(user, "player-state", {
+                            suspects: shuffleArray([state.murderer, state.assistant]),
+                            witness: state.witness
+                        });
                     else
-                        send(user, "player", {})
+                        send(user, "player-state", {})
                 },
                 updateState = () => [...room.onlinePlayers].forEach(sendState),
-                getRandomPlayer = (exclude) => room.playerSlots.indexOf(
-                    shuffleArray(room.playerSlots.filter((user) => !~exclude.indexOf(user)))[0]
-                ),
+                getRandomPlayer = (exclude, allowEmptySlot) => {
+                    const res = [];
+                    room.playerSlots.forEach((user, slot) => {
+                        if ((allowEmptySlot || user !== null) && !~exclude.indexOf(slot))
+                            res.push(slot);
+                    });
+                    return shuffleArray(res)[0];
+                },
                 startGame = () => {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 3) {
                         room.phase = 1;
                         room.crimeWin = null;
-                        room.master = getRandomPlayer([null]);
-                        state.murderer = getRandomPlayer([null, room.master]);
+                        room.master = getRandomPlayer([]);
+                        state.murderer = getRandomPlayer([room.master]);
                         state.witness = null;
                         if (playersCount > 5) {
-                            state.assistant = getRandomPlayer([null, room.master, state.murderer]);
-                            state.witness = getRandomPlayer([null, room.master, state.murderer, state.assistant]);
+                            state.assistant = getRandomPlayer([room.master, state.murderer]);
+                            state.witness = getRandomPlayer([room.master, state.murderer, state.assistant]);
                         }
                         room.reconTiles = [3, 4, 5, 6, 7, 2];
                         room.reconBullets = {};
@@ -120,11 +131,10 @@ function init(wsServer, path) {
                             deckState.weapon = shuffleArray(Array(90).fill(null).map((v, index) => index));
                         if (deckState.clue.length < playersCount * 4)
                             deckState.clue = shuffleArray(Array(200).fill(null).map((v, index) => index));
-                        room.cards = room.playerSlots.map((user) =>
-                            user !== null && user !== room.master ? {
+                        room.cards = room.playerSlots.map((user, slot) =>
+                            user !== null && slot !== room.master ? {
                                 weapons: deckState.weapon.splice(0, 4),
                                 clues: deckState.clue.splice(0, 4),
-                                checked: [],
                                 weaponsMarked: Array(4).fill([]),
                                 cluesMarked: Array(4).fill([]),
                                 weaponsSelected: Array(4).fill([]),
@@ -236,7 +246,7 @@ function init(wsServer, path) {
                                         const playersCount = room.cards.filter((state) => state !== null).length;
                                         if (playersCount !== 4 && playersCount !== 6) {
                                             removePlayer(room.playerSlots[room.master]);
-                                            const newMasterSlot = getRandomPlayer([null, room.master, state.murderer, state.assistant, state.witness]);
+                                            const newMasterSlot = getRandomPlayer([room.master, state.murderer, state.assistant, state.witness], true);
                                             room.playerSlots[room.master] = room.playerSlots[newMasterSlot];
                                             room.playerSlots[newMasterSlot] = null;
                                             room.cards[newMasterSlot] = null;
@@ -257,6 +267,7 @@ function init(wsServer, path) {
                 },
                 endGame = () => {
                     room.phase = 0;
+                    room.paused = true;
                     update();
                     updateState();
                 },
@@ -352,7 +363,7 @@ function init(wsServer, path) {
                     }
                 },
                 "set-bullet": (slot, tile, id) => {
-                    if (room.phase !== 1 && room.master === slot && tile >= 0 && tile <= 6 && id >= 0 && id <= 5 && !room.reconBullets[tile]) {
+                    if (room.phase !== 1 && room.master === slot && tile >= 0 && tile <= 6 && id >= 0 && id <= 5 && room.reconBullets[tile] === undefined) {
                         room.reconBullets[tile] = id;
                         if (Object.keys(room.reconBullets).length === 6)
                             startCommon();
@@ -360,7 +371,7 @@ function init(wsServer, path) {
                     update();
                 },
                 "change-location-tile": (slot) => {
-                    if (slot === room.master && !room.reconBullets[1]) {
+                    if (slot === room.master && room.reconBullets[1] === undefined) {
                         room.reconTiles[1]++;
                         if (room.reconTiles[1] === 8)
                             room.reconTiles[1] = 4;
@@ -438,6 +449,8 @@ function init(wsServer, path) {
                 },
                 "players-join": (user, slot) => {
                     if (!room.teamsLocked && room.playerSlots[slot] === null) {
+                        if (~room.playerSlots.indexOf(user))
+                            room.playerSlots[room.playerSlots.indexOf(user)] = null;
                         room.spectators.delete(user);
                         room.playerSlots[slot] = user;
                         update();
@@ -449,6 +462,7 @@ function init(wsServer, path) {
                         room.playerSlots[room.playerSlots.indexOf(user)] = null;
                         room.spectators.add(user);
                         update();
+                        sendState(user);
                     }
                 },
                 "toggle-pause": (user) => {
@@ -458,6 +472,21 @@ function init(wsServer, path) {
                         else
                             room.paused = !room.paused;
                         room.teamsLocked = !room.teamsLocked;
+                    }
+                    update();
+                },
+                "toggle-timed": (user) => {
+                    if (user === room.hostId) {
+                        room.timed = !room.timed;
+                        if (!room.timed)
+                            room.paused = true;
+                    }
+                    update();
+                },
+                "restart-game": (user) => {
+                    if (user === room.hostId) {
+                        endGame();
+                        startGame();
                     }
                     update();
                 },

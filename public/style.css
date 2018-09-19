@@ -2,17 +2,7 @@
     font-weight: bold;
 }
 
-.player.ready {
-    background: #e2f0c4;
-}
-
-.player.current:before {
-    content: "➜ ";
-    line-height: 0;
-}
-
 .player.offline {
-    color: #adadad;
 }
 
 .host-controls {
@@ -73,11 +63,12 @@
 }
 
 .avatar {
-    width: 190px;
-    height: 200px;
+    width: 160px;
+    height: 160px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    position: relative;
 }
 
 .player {
@@ -85,24 +76,10 @@
     user-select: none;
 }
 
-#background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+body {
     background: #0e0e0e url(background.jpg) center no-repeat;
     background-size: cover;
-    filter: blur(0) brightness(1);
-    transition: filter 2s;
-    z-index: -1;
-}
-
-#background.blurred {
-    filter: blur(5px) brightness(0.8);
-}
-
-body {
-    margin: 0;
-    background: black;
+    background: #e2d5c4;
 }
 
 .kicked {
@@ -158,27 +135,201 @@ body {
     vertical-align: middle;
 }
 
-.join-players-button {
-    z-index: 1;
-    font-size: 40px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    padding: 84px;
-    background: #a7a7a740;
-    margin: 5px;
-    padding-top: 90px;
-}
-
-.set-avatar-button, .show-notes-button {
+.set-avatar-button {
     display: none;
 }
 
-.set-avatar-button i, .show-notes-button i {
+.set-avatar-button i {
     position: absolute;
     right: 0;
     top: 0;
     color: #4c4c4c;
     background: rgba(255, 255, 255, 0.74);
     z-index: 2;
+}
+
+.switch {
+    width: 80px;
+    margin: 0 1%;
+    height: 100px;
+    background-image: linear-gradient(#e9e2df 1.6%, #d1c3bb 94.9%, #b4a69f);
+    box-shadow: inset 0 10px rgba(255, 255, 255, .7),
+    inset 0 11px 1px rgba(250, 250, 250, .2),
+    inset 0 -2px 1px rgba(0, 0, 0, .2);
+    border-radius: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+.switch:before {
+    content: "";
+    background: rgba(0, 0, 0, .1);
+    width: 36%;
+    position: absolute;
+    height: 4px;
+    margin: 16px 32%;
+    border-radius: 12px;
+    box-shadow: inset 0 0 1px rgba(0, 0, 0, .2);
+    border: 1px solid rgba(0, 0, 0, .1);
+}
+
+.switch:after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: linear-gradient(to bottom, rgba(65, 50, 0, 0.25) 0%, rgba(65, 50, 0, 0.25) 1%, rgba(65, 50, 0, 0) 68%, rgba(65, 50, 0, 0) 100%);
+    border-radius: 2px;
+}
+
+.switch.on {
+    background-image: linear-gradient(#fff 1.8%, #f7f6f5 1.8%, #eee6e2 99%, #f0ece8 99%, #f0ece8);
+    box-shadow: inset 0 -13px 2px rgba(255, 255, 255, 1);
+}
+
+.switch.on:before {
+    margin-top: 10px;
+    background: orange;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .2),
+    0 0 2px orange;
+}
+
+.switch.on:after {
+    content: "";
+    position: absolute;
+    top: 90%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(65, 50, 0, 0.3) 0%, rgba(65, 50, 0, 0.3) 35%, rgba(65, 50, 0, 0) 68%, rgba(65, 50, 0, 0) 100%);
+    border-radius: 2px;
+}
+
+.card-face.weapons {
+    background-image: url(weapons.jpg);
+}
+
+.card-face.clues {
+    background-image: url(clues.jpg);
+}
+
+.recon-tile-face {
+    background-image: url(recon.jpg);
+    width: 160px;
+    height: 349px;
+    background-size: cover;
+    margin-right: 5px;
+    border-radius: 10px;
+}
+
+.top-slots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap-reverse;
+}
+
+.bottom-slots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.middle-slots {
+    display: flex;
+    justify-content: center;
+}
+
+.slot-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.recon-tiles {
+    display: flex;
+}
+
+.progress-panel {
+    position: fixed;
+}
+
+.speech-panel {
+    position: fixed;
+}
+
+.status-panel {
+    position: fixed;
+}
+
+.player-cards > div {
+    display: flex;
+}
+
+.player-name {
+    text-align: center;
+}
+
+.avatar {
+    background-color: #efebeb;
+}
+
+.card-face {
+    width: 72px;
+    height: 111.6px;
+    background-size: cover;
+}
+
+.card {
+    position: relative;
+    margin: 2px;
+}
+
+.card-selects {
+    position: absolute;
+    top: 0;
+}
+
+.player-slot {
+    display: flex;
+    margin: 6px;
+    padding: 5px;
+    background: #adadad;
+    box-shadow: 0 0 6px 0px black;
+}
+
+.player-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 4px;
+}
+
+.master-slot {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.master-slot .avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.player-role {
+    background-image: url(roles.jpg);
+    width: 40px;
+    height: 64.2px;
+    position: absolute;
+    top: -10px;
+    left: -3px;
+    background-size: cover;
+}
+
+.master-slot .player-role {
+    top: auto;
+    left: auto;
+    bottom: -5px;
+    right: -4px;
 }
