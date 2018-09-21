@@ -14,7 +14,8 @@ class Player extends React.Component {
     render() {
         const
             data = this.props.data,
-            id = this.props.id;
+            id = this.props.id,
+            hasPlayer = id !== null;
         return (
             <div className={
                 "player"
@@ -22,34 +23,40 @@ class Player extends React.Component {
                 + (id === data.userId ? " self" : "")
             }
                  data-playerId={id}>
-                {data.playerNames[id]}
-                <div className="player-host-controls">
+                <div className={`player-name-text bg-color-${this.props.slot}`}>
+                    {hasPlayer
+                        ? data.playerNames[id]
+                        : (data.teamsLocked
+                            ? (<div className="slot-empty">Пусто</div>)
+                            : (<div className="join-slot-button"
+                                    onClick={() => this.props.handlePlayerJoin(this.props.slot)}>Занять место</div>))}
+                </div>
+                {hasPlayer ? (<div className="player-host-controls">
                     {(data.hostId === data.userId && data.userId !== id) ? (
                         <i className="material-icons host-button"
-                           title="Give host"
+                           title="Передать хост"
                            onClick={(evt) => this.props.handleGiveHost(id, evt)}>
                             vpn_key
                         </i>
                     ) : ""}
                     {(data.hostId === data.userId && data.userId !== id) ? (
                         <i className="material-icons host-button"
-                           title="Remove"
+                           title="Удалить"
                            onClick={(evt) => this.props.handleRemovePlayer(id, evt)}>
                             delete_forever
                         </i>
                     ) : ""}
                     {(data.hostId === id) ? (
                         <i className="material-icons host-button inactive"
-                           title="Game host">
+                           title="Хост">
                             stars
                         </i>
                     ) : ""}
-                </div>
+                </div>) : ""}
             </div>
         );
     }
 }
-
 
 class Spectators extends React.Component {
     render() {
@@ -83,29 +90,38 @@ class Card extends React.Component {
                     : ((props.card + 1) * 72),
                 isRightCard = props.data.player.weapon
                     && props.data.player.murderer === props.slot
-                    && props.data.player[props.cardType === "weapons" ? "weapon" : "clue"] === props.card;
-            return (<div className={`card`}>
-                <div className={`card-face ${props.cardType} ${isRightCard ? "right-card" : ""}`}
-                     onClick={(evt) => !evt.stopPropagation() && props.handleCardMark(props.cardId)}
-                     style={{"background-position-x": -position}}/>
+                    && props.data.player[props.cardType === "weapons" ? "weapon" : "clue"] === props.cardId,
+                isCriminal = props.data.userSlot !== null && (props.data.userSlot === props.data.player.murderer || props.data.userSlot === props.data.player.assistant);
+            return (<div
+                className={`card ${isRightCard ? "correct" : ""} ${props.data.userSlot !== null && (props.data.phase > 1 || isCriminal) ? "button" : ""}`}
+                onClick={(evt) => !evt.stopPropagation() && props.handleCardMark(props.cardId)}>
+                <div
+                    className={`card-face ${props.cardType}`}
+                    style={{"background-position-x": -position}}/>
+                <div className="card-marks">
+                    {(props.marksData || []).map((selectSlot) => (
+                        <div className={`card-mark card-mark-slot-${selectSlot} bg-color-${selectSlot}`}/>))}
+                </div>
                 <div className="card-selects">
                     {(props.selectsData || []).map((selectSlot) => {
                         const
-                            hasBadge = props.data.cards[selectSlot].hasBadge,
+                            hasBadge = props.data.cards[selectSlot] && props.data.cards[selectSlot].hasBadge,
                             isPlayer = props.data.userSlot === selectSlot;
                         return (<div
-                            className={`card-check card-check-slot-${selectSlot} ${!hasBadge ? "checked" : ""} ${isPlayer ? "button" : ""}`}
-                            onClick={() => isPlayer && props.handleCardSelect(props.cardId)}>
-                            {hasBadge ? "✔" : "✖"}
+                            className={`card-check card-check-slot-${selectSlot} bg-color-${selectSlot} ${!hasBadge ? "checked" : ""} ${isPlayer ? "button" : ""}`}
+                            onClick={(evt) => !evt.stopPropagation() && isPlayer && props.handleCardSelect(props.cardId)}>
+                            {hasBadge || isRightCard ? "✔" : "✖"}
                         </div>);
                     })}
-                    {!~(props.selectsData || []).indexOf(props.data.userSlot) ? (
-                        <div className={`card-check card-check-slot-${props.slot} button`}
-                             onClick={() => props.handleCardSelect(props.cardId)}>✔</div>) : ""}
-                </div>
-                <div className="card-marks">
-                    {(props.marksData || []).map((selectSlot) => (
-                        <div className={`card-mark card-mark-slot-${selectSlot}`}/>))}
+                    {props.data.userSlot !== null && props.data.master !== props.data.userSlot
+                    && ((props.data.phase > 1 && props.data.cards[props.data.userSlot].hasBadge)
+                        || (props.data.phase === 1 && props.data.player.murderer === props.slot && isCriminal))
+                    && !~(props.selectsData || []).indexOf(props.data.userSlot)
+                        ? (
+                            <div
+                                className={`card-check card-check-slot-${props.data.userSlot} bg-color-${props.data.userSlot} button not-set`}
+                                onClick={(evt) => !evt.stopPropagation() && props.handleCardSelect(props.cardId)}>✔</div>)
+                        : ""}
                 </div>
             </div>)
         } catch (e) {
@@ -118,8 +134,10 @@ class Card extends React.Component {
 class ReconTile extends React.Component {
     render() {
         try {
-            const props = this.props;
-            return (<div className="recon-tile">
+            const
+                props = this.props,
+                unselected = props.data.phase > 0 && props.data.reconBullets[props.tileId] === undefined;
+            return (<div className={`recon-tile ${unselected ? "unselected" : ""}`}>
                 <div className="recon-tile-face" style={{"background-position-x": props.tile * -160}}>
                     <div className="recon-tile-options">
                         {Array(6).fill(null).map((v, id) => (
@@ -128,15 +146,17 @@ class ReconTile extends React.Component {
                                     ? (props.data.reconBullets[props.tileId] === id ? "selected" : "")
                                     : "button"}`}
                                 onClick={() => props.data.reconBullets[props.tileId] !== null
-                                    && props.handleSetBullet(props.tileId, id)}/>))}
+                                    && props.game.handleSetBullet(props.tileId, id)}/>))}
                     </div>
                 </div>
                 {props.data.reconTiles.length > 6 ? (
-                    <div className="recon-tile-swap-button" onClick={() => props.handleSwapReconTile(props.tileId)}>
+                    <div className="recon-tile-swap-button"
+                         onClick={() => props.game.handleSwapReconTile(props.tileId)}>
                         Заменить
                     </div>) : ""}
-                {props.data.reconBullets[props.tileId] === null ? (
-                    <div className="recon-tile-change-location-button" onClick={() => props.handleChangeLocationTile()}>
+                {props.tileId === 1 && unselected ? (
+                    <div className="recon-tile-change-location-button"
+                         onClick={(evt) => !evt.stopPropagation() && props.game.handleChangeLocationTile()}>
                         <i className="material-icons">filter_none</i>
                     </div>) : ""}
             </div>);
@@ -189,12 +209,6 @@ class PlayerSlot extends React.Component {
                             ${isMaster ? "master-slot" : ""}
                             player-slot-${slot}`}>
                     <div className="player-section">
-                        {player === data.userId
-                            ? (<div className="set-avatar-button">
-                                <i onClick={() => game.handleClickSetAvatar()}
-                                   className="toggle-theme material-icons settings-button">edit</i>
-                            </div>)
-                            : ""}
                         <div className={`avatar ${player !== null ? "" : "no-player"}`}
                              style={{
                                  "background-image": player !== null ? `url(/deception/${data.playerAvatars[player]
@@ -204,14 +218,21 @@ class PlayerSlot extends React.Component {
                             <div className="player-role"
                                  style={{"background-position-x": roles.indexOf(role[0]) * -40}}
                                  title={role[1]}/>
+                            {cards.hasBadge
+                                ? (<div className="player-badge"/>)
+                                : ""}
+                            {player === data.userId
+                                ? (<div className="set-avatar-button">
+                                    <i onClick={() => game.handleClickSetAvatar()}
+                                       className="toggle-theme material-icons settings-button">edit</i>
+                                </div>)
+                                : ""}
                         </div>
                         <div className="player-name">
-                            {player !== null
-                                ? (<Player id={player} data={data}
-                                           handleRemovePlayer={(id, evt) => game.handleRemovePlayer(id, evt)}
-                                           handleGiveHost={(id, evt) => game.handleGiveHost(id, evt)}/>)
-                                : (<div className="join-slot-button"
-                                        onClick={() => game.handlePlayerJoin(slot)}>Войти</div>)}
+                            <Player id={player} data={data} slot={slot}
+                                    handleRemovePlayer={(id, evt) => game.handleRemovePlayer(id, evt)}
+                                    handlePlayerJoin={(slot) => game.handlePlayerJoin(slot)}
+                                    handleGiveHost={(id, evt) => game.handleGiveHost(id, evt)}/>
 
                         </div>
                         {data.phase === 5 && slot !== data.master
@@ -219,7 +240,8 @@ class PlayerSlot extends React.Component {
                                     onClick={() => game.handleWitnessClick(slot)}>Убить</div>)
                             : ""}
                     </div>
-                    {slot !== data.master ? (<div className="player-cards">
+                    {slot !== data.master || (data.phase === 0 && !data.teamsLocked) ? (<div className="player-cards">
+                        <div className="player-cards-background"/>
                         <div className="player-cards-weapons">
                             {cards.weapons.map((card, id) => <Card cardId={id} card={card} data={data}
                                                                    slot={slot}
@@ -270,22 +292,25 @@ class Game extends React.Component {
         this.socket.on("state", (state) => {
             this.setState(Object.assign(state, {
                 userId: this.userId,
-                userSlot: state.playerSlots.indexOf(this.userId),
+                userSlot: ~state.playerSlots.indexOf(this.userId)
+                    ? state.playerSlots.indexOf(this.userId)
+                    : null,
                 player: this.state.player || {},
-                color: this.color
+                color: this.state.color
             }));
         });
         this.socket.on("player-state", (player) => {
-            if (this.state.player.murderer === null)
+            if (this.state.color === undefined
+                && (this.state.player.murderer === this.state.userSlot || this.state.player.murderer === this.state.userSlot))
                 if (player.murderer === this.state.userSlot)
-                    this.color = 0;
+                    this.state.color = 0;
                 else if (player.assistant === this.state.userSlot)
-                    this.color = 5;
+                    this.state.color = 5;
             this.setState(Object.assign(this.state, {
                 userId: this.userId,
                 userSlot: this.state.userSlot,
                 player: player,
-                color: this.color
+                color: this.state.color
             }));
         });
         window.socket.on("disconnect", (event) => {
@@ -307,6 +332,7 @@ class Game extends React.Component {
         });
         this.timerSound = new Audio("/deception/tick.mp3");
         this.timerSound.volume = 0.5;
+        this.seconds = this.minutes = this.prevSeconds = this.prevMinutes = "00";
     }
 
     constructor() {
@@ -349,9 +375,9 @@ class Game extends React.Component {
         this.socket.emit("toggle-timed");
     }
 
-    handleClickRestart() {
-        if (data.phase !== 0 || confirm("Restart? Are you sure?"))
-            this.socket.emit("restart-game");
+    handleClickStop() {
+        if (confirm("Игра будет отменена. Вы уверены?"))
+            this.socket.emit("abort-game");
     }
 
     handleToggleMuteSounds() {
@@ -360,7 +386,7 @@ class Game extends React.Component {
             userId: this.userId,
             userSlot: this.state.userSlot,
             player: this.state.player,
-            color: this.color
+            color: this.state.color
         }, this.state));
     }
 
@@ -410,7 +436,7 @@ class Game extends React.Component {
     }
 
     handleCardMark(slot, type, id) {
-        this.socket.emit("mark-card", slot, type, id, this.color);
+        this.socket.emit("mark-card", slot, type, id, this.state.color);
     }
 
     handlePlayerJoin(slot) {
@@ -445,9 +471,43 @@ class Game extends React.Component {
         this.socket.emit("change-location-tile");
     }
 
+    handleChangeColor() {
+        this.state.color += 1;
+        if (this.state.color > 11)
+            this.state.color = 0;
+        this.setState(Object.assign({}, this.state));
+    }
+
+    updateClock() {
+        if (this.prevMinutes !== this.minutes)
+            this.updateTimerFlipEl(
+                document.getElementsByClassName("flip-clock__piece")[0],
+                this.minutes,
+                this.prevMinutes
+            );
+        if (this.prevSeconds !== this.seconds)
+            this.updateTimerFlipEl(
+                document.getElementsByClassName("flip-clock__piece")[1],
+                this.seconds,
+                this.prevSeconds
+            );
+    }
+
+    updateTimerFlipEl(el, value, prevValue) {
+        if (el) {
+            el.getElementsByClassName("card__back")[0].setAttribute("data-value", prevValue);
+            el.getElementsByClassName("card__bottom")[0].setAttribute("data-value", prevValue);
+            el.getElementsByClassName("card__top")[0].innerText = value;
+            el.getElementsByClassName("card__bottom")[1].setAttribute("data-value", value);
+            el.classList.remove("flip");
+            void el.offsetHeight;
+            el.classList.add("flip");
+        }
+    }
+
     render() {
         try {
-            clearTimeout(this.timerTimeout);
+            clearInterval(this.timerTimeout);
             if (this.state.disconnected)
                 return (<div
                     className="kicked">Disconnected{this.state.disconnectReason ? ` (${this.state.disconnectReason})` : ""}</div>);
@@ -455,15 +515,21 @@ class Game extends React.Component {
                 const
                     data = this.state,
                     isHost = data.hostId === data.userId,
-                    inProcess = data.phase !== 0 || data.paused,
+                    inProcess = data.phase !== 0 && !data.paused,
                     parentDir = location.pathname.match(/(.+?)\//)[1],
-                    wantSpeech = !!~data.speechPlayers.indexOf(data.userSlot);
+                    wantSpeech = !!~data.speechPlayers.indexOf(data.userSlot),
+                    notEnoughPlayers = data.playerSlots.filter((slot) => slot !== null).length < 4;
                 let status, showChargeButton, showCrimeButton;
+                if (data.time) {
+                    const date = new Date(data.time).toUTCString().match(/\d\d:(\d\d):(\d\d)/);
+                    this.minutes = date[1];
+                    this.seconds = date[2];
+                }
                 if (data.inited) {
                     const
                         prevResult = data.crimeWin === null ? "" : (data.crimeWin ? "Преступники победили! " : "Победа правосудия! "),
-                        lastRoundWarn = (data.round === 3 && data.cards[data.userSlot].hasBadge) ? ". Успейте предъявить обвинение до конца раунда" : "";
-                    if (data.playerSlots.filter((slot) => slot !== null).length < 4)
+                        lastRoundWarn = (data.round === 3 && data.cards[data.userSlot] && data.cards[data.userSlot].hasBadge) ? ". Успейте предъявить обвинение до конца раунда" : "";
+                    if (notEnoughPlayers)
                         status = `${prevResult}Недостаточно игроков`;
                     else if (data.phase === 0)
                         if (data.userId === data.hostId)
@@ -507,61 +573,62 @@ class Game extends React.Component {
                         else
                             status = "Убийца ищет свидетеля";
                 }
-                if (inProcess && this.timed) {
+                if (inProcess && this.state.timed && !this.state.paused) {
                     let timeStart = new Date();
-                    this.timerTimeout = setTimeout(() => {
-                        if (!this.state.paused) {
-                            let prevTime = this.state.time,
-                                time = prevTime - (new Date - timeStart);
-                            this.setState(Object.assign({}, this.state, {
-                                userId: this.userId,
-                                userSlot: this.userSlot,
-                                player: this.state.player,
-                                color: this.color,
-                                time: time
-                            }));
-                            if (this.state.timed && !this.state.paused && time < 6000
-                                && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0) && !parseInt(localStorage.muteSounds))
-                                this.timerSound.play();
-                        }
-                    }, 100);
+                    this.timerTimeout = setInterval(() => {
+                        let prevTime = this.state.time,
+                            time = prevTime - (new Date() - timeStart);
+                        this.state.time = time;
+                        const date = new Date(data.time).toUTCString().match(/\d\d:(\d\d):(\d\d)/);
+                        this.prevMinutes = this.minutes;
+                        this.prevSeconds = this.seconds;
+                        this.minutes = date[1];
+                        this.seconds = date[2];
+                        this.updateClock();
+                        if (this.state.timed && !this.state.paused && time < 6000
+                            && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0) && !parseInt(localStorage.muteSounds))
+                            this.timerSound.play();
+                        timeStart = new Date();
+                    }, 200);
                 }
-                if (data.phase === 1 && data.userSlot === data.player.murderer)
-                    Object.keys(data.cards).forEach((slot) => {
-                        const cardsSlot = data.cards[slot];
+                if (data.userSlot !== null && data.phase === 1 && data.userSlot === data.player.murderer && data.player.crimePlan)
+                    Object.keys(data.player.crimePlan).forEach((slot) => {
+                        slot = parseInt(slot);
+                        const cardsSlot = data.player.crimePlan[slot];
                         if (cardsSlot && slot === data.userSlot) {
                             let weaponSelected, clueSelected;
                             cardsSlot.weaponsSelected.forEach((weaponSlots) => {
-                                if (weaponSlots.indexOf(data.userSlot))
+                                if (~weaponSlots.indexOf(data.userSlot))
                                     weaponSelected = true;
                             });
                             cardsSlot.cluesSelected.forEach((clueSlots) => {
-                                if (clueSlots.indexOf(data.userSlot))
+                                if (~clueSlots.indexOf(data.userSlot))
                                     clueSelected = true;
                             });
                             showCrimeButton = weaponSelected && clueSelected;
                         }
                     });
-                if (data.cards[data.userSlot] && data.cards[data.userSlot].hasBadge) {
+                if (data.phase > 1 && data.cards[data.userSlot] && data.cards[data.userSlot].hasBadge) {
                     let weaponSelectedSlot, clueSelectedSlot;
                     Object.keys(data.cards).forEach((slot) => {
+                        slot = parseInt(slot);
                         const cardsSlot = data.cards[slot];
                         if (cardsSlot) {
                             cardsSlot.weaponsSelected.forEach((weaponSlots) => {
-                                if (weaponSlots.indexOf(data.userSlot))
+                                if (~weaponSlots.indexOf(data.userSlot))
                                     weaponSelectedSlot = slot;
                             });
                             cardsSlot.cluesSelected.forEach((clueSlots) => {
-                                if (clueSlots.indexOf(data.userSlot))
+                                if (~clueSlots.indexOf(data.userSlot))
                                     clueSelectedSlot = slot;
                             });
                         }
                     });
-                    showChargeButton = weaponSelectedSlot && (weaponSelectedSlot === clueSelectedSlot);
+                    showChargeButton = weaponSelectedSlot !== undefined && (weaponSelectedSlot === clueSelectedSlot);
                 }
                 const activeSlots = [];
                 data.playerSlots.forEach((userId, slot) => {
-                    if (data.phase === 0 || (data.cards[slot] !== null && slot !== data.master))
+                    if (data.cards[slot] !== null && slot !== data.master)
                         activeSlots.push(slot);
                 });
                 const
@@ -575,25 +642,108 @@ class Game extends React.Component {
                         <div className={`game-board ${(this.state.inited ? "active" : "")}`}>
                             <div className="slot-list">
                                 <div className="top-slots">
-                                    {slots.slice(0, Math.ceil(playerCount / 2)).reverse().map((slot) => (
+                                    {slots.slice(0, Math.floor(playerCount / 2)).reverse().map((slot) => (
                                         <PlayerSlot data={data} slot={slot} game={this}/>))}
                                 </div>
                                 <div className="middle-slots">
-                                    {(<div className="recon-tiles">{data.reconTiles.map((tile, tileId) =>
-                                        (<ReconTile data={data} tileId={tileId} tile={tile}
-                                                    handleSwapTile={(tile) => this.handleSwapReconTile(tile)}
-                                                    handleChangeLocationTile={() => this.handleChangeLocationTile()}
-                                                    handleSetBullet={(id) => this.handleSetBullet(tileId, id)}/>))}
-                                    </div>)}
+                                    <div className="recon-tiles">
+                                        <div className="recon-tiles-row">
+                                            {data.reconTiles.slice(0, 3).map((tile) =>
+                                                (<ReconTile data={data} tileId={data.reconTiles.indexOf(tile)} game={this} tile={tile}/>))}
+                                        </div>
+                                        <div className="recon-tiles-row">
+                                            {data.reconTiles.slice(3, 6).map((tile) =>
+                                                (<ReconTile data={data} tileId={data.reconTiles.indexOf(tile)} game={this} tile={tile}/>))}
+                                            {data.reconTiles[6] !== undefined
+                                                ? (<div className="recon-tile-additional">
+                                                    <ReconTile data={data} tileId={6} game={this}
+                                                               tile={data.reconTiles[6]}/>
+                                                </div>)
+                                                : ""}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="bottom-slots">
-                                    {slots.slice(Math.ceil(playerCount / 2)).map((slot) => (
+                                    {slots.slice(Math.floor(playerCount / 2)).map((slot) => (
                                         <PlayerSlot data={data} slot={slot} game={this}/>))}
                                 </div>
                             </div>
-                            {data.phase !== 0 ? (<div className="master-section">
-                                <PlayerSlot data={data} slot={data.master} game={this} isMaster={true}/>
-                            </div>) : ""}
+                            {data.master !== null && (data.teamsLocked || data.phase !== 0) ? (
+                                <div className="master-section">
+                                    <PlayerSlot data={data} slot={data.master} game={this} isMaster={true}/>
+                                </div>) : ""}
+                            <div className="bottom-panel">
+                                <div className={`speech-panel ${~[3, 4].indexOf(data.phase) ? "active" : ""}`}>
+                                    <div className={`switch ${wantSpeech ? "on" : ""}`}
+                                         onClick={() => this.handleToggleSpeech()}/>
+                                    <div className="speech-panel-indicators">
+                                        <div className={`speech-mode ${wantSpeech ? "active" : ""}`}>Мне есть, что
+                                            сказать
+                                        </div>
+                                        <div className={`speech-mode ${!wantSpeech ? "active" : ""}`}>Больше нечего
+                                            сказать
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="status-panel">
+                                    <div className="status-message">{status}</div>
+                                    <div className="progress-panel">
+                                        <div className={`progress ${data.phase === 1 ? "active" : ""}`}>Убийство</div>
+                                        <div className={`progress ${data.phase === 2 ? "active" : ""}`}>Реконструкция
+                                        </div>
+                                        <div className="progress-round">
+                                            <div
+                                                className={`progress ${data.phase > 2 && data.round === 1 ? "active" : ""}`}>1
+                                            </div>
+                                            <div
+                                                className={`progress ${data.phase > 2 && data.round === 2 ? "active" : ""}`}>2
+                                            </div>
+                                            <div
+                                                className={`progress ${data.phase > 2 && data.round === 3 ? "active" : ""}`}>3
+                                            </div>
+                                        </div>
+                                        <div className={`progress ${data.phase === 3 ? "active" : ""}`}>Обсуждение</div>
+                                        <div className={`progress ${data.phase === 4 ? "active" : ""}`}>Высказывания
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`timer flip-clock ${data.phase !== 0 && data.timed && data.time ? "active" : ""}`}>
+                                    <span className="flip-clock__piece flip">
+                                        <b className="flip-clock__card clock-card">
+                                            <b className="card__top">{this.minutes}</b>
+                                            <b className="card__bottom" data-value={this.minutes}/>
+                                            <b className="card__back" data-value={this.minutes}>
+                                                <b className="card__bottom" data-value={this.minutes}/>
+                                            </b>
+                                        </b>
+                                    </span>
+                                    <span className="flip-clock__piece flip">
+                                        <b className="flip-clock__card clock-card">
+                                            <b className="card__top">{this.seconds}</b>
+                                            <b className="card__bottom" data-value={this.seconds}/>
+                                            <b className="card__back" data-value={this.seconds}>
+                                                <b className="card__bottom" data-value={this.seconds}/>
+                                            </b>
+                                        </b>
+                                    </span>
+                                </div>
+                                {showChargeButton
+                                    ? (<div className="charge-button" onClick={() => this.handleChargeClick()}>
+                                        Предъявить обвинение</div>)
+                                    : ""}
+                                {showCrimeButton
+                                    ? (<div className="crime-button" onClick={() => this.handleAcceptCrimeClick()}>
+                                        Совершить преступление</div>)
+                                    : ""}
+                                {data.phase === 1 && data.userSlot !== null && (data.userSlot === data.player.murderer || data.userSlot === data.player.assistant)
+                                    ? <div className={`color-picker bg-color-${data.color}`}
+                                           onClick={() => this.handleChangeColor()}>
+                                        <i className="material-icons">edit</i>
+                                    </div>
+                                    : ""}
+                            </div>
+
                             <div className={
                                 "spectators-section"
                                 + ((data.spectators.length > 0 || !data.teamsLocked) ? " active" : "")
@@ -603,52 +753,11 @@ class Game extends React.Component {
                                             handleRemovePlayer={(id, evt) => this.handleRemovePlayer(id, evt)}
                                             handleGiveHost={(id, evt) => this.handleGiveHost(id, evt)}/>
                             </div>
-                            {data.phase !== 0 && data.timed && data.time ? (<div className="timer">
-                                {new Date(data.time).toUTCString().match(/(\d\d:\d\d )/)[0].trim()}
-                            </div>) : ""}
-                            <div className="status-panel">{status}</div>
-                            <div className="progress-panel">
-                                <div className={`progress ${data.phase === 1 ? "active" : ""}`}>Убийство</div>
-                                <div className={`progress ${data.phase === 2 ? "active" : ""}`}>Реконструкция</div>
-                                <div className="progress-round">
-                                    <div
-                                        className={`progress ${data.phase > 2 && data.round === 1 ? "active" : ""}`}>1
-                                    </div>
-                                    <div
-                                        className={`progress ${data.phase > 2 && data.round === 2 ? "active" : ""}`}>2
-                                    </div>
-                                    <div
-                                        className={`progress ${data.phase > 2 && data.round === 3 ? "active" : ""}`}>3
-                                    </div>
-                                </div>
-                                <div className={`progress ${data.phase === 3 ? "active" : ""}`}>Обсуждение</div>
-                                <div className={`progress ${data.phase === 4 ? "active" : ""}`}>Высказывания</div>
-                            </div>
-                            <div className={`speech-panel${~[3, 4].indexOf(data.phase) ? "active" : ""}`}>
-                                <div className={`switch ${wantSpeech ? "on" : ""}`}
-                                     onClick={() => this.handleToggleSpeech()}/>
-                                <div className="speech-panel-indicators">
-                                    <div className={`speech-mode ${wantSpeech ? "active" : ""}`}>Мне есть, что
-                                        сказать
-                                    </div>
-                                    <div className={`speech-mode ${!wantSpeech ? "active" : ""}`}>Больше нечего
-                                        сказать
-                                    </div>
-                                </div>
-                            </div>
-                            {showChargeButton
-                                ? (<div className="charge-button" onClick={() => this.handleChargeClick()}>
-                                    Предъявить обвинение</div>)
-                                : ""}
-                            {showCrimeButton
-                                ? (<div className="crime-button" onClick={() => this.handleAcceptCrimeClick()}>
-                                    Совершить преступление</div>)
-                                : ""}
                             <div className="host-controls">
                                 {data.timed ? (<div className="host-controls-menu">
                                     <div className="little-controls">
-                                        <div className="game-settings">
-                                            <div className="set-master-time"><i title="crime time"
+                                        <div className="game-settings little-controls">
+                                            <div className="set-master-time"><i title="Фаза преступления"
                                                                                 className="material-icons">alarm_add</i>
                                                 {(isHost && !inProcess) ? (<input id="goal"
                                                                                   type="number"
@@ -658,7 +767,7 @@ class Game extends React.Component {
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "crime")}
                                                 />) : (<span className="value">{this.state.crimeTime}</span>)}
                                             </div>
-                                            <div className="set-team-time"><i title="master time"
+                                            <div className="set-team-time"><i title="Фаза реконструкции"
                                                                               className="material-icons">alarm</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
@@ -668,7 +777,7 @@ class Game extends React.Component {
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "master")}
                                                 />) : (<span className="value">{this.state.masterTime}</span>)}
                                             </div>
-                                            <div className="set-add-time"><i title="common time"
+                                            <div className="set-add-time"><i title="Фаза обсуждения"
                                                                              className="material-icons">alarm_on</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
@@ -678,7 +787,7 @@ class Game extends React.Component {
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "common")}
                                                 />) : (<span className="value">{this.state.commonTime}</span>)}
                                             </div>
-                                            <div className="set-add-time"><i title="personal time"
+                                            <div className="set-add-time"><i title="Фаза высказываний"
                                                                              className="material-icons">timer</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
@@ -694,24 +803,24 @@ class Game extends React.Component {
                                 <div className="side-buttons">
                                     <i onClick={() => window.location = parentDir}
                                        className="material-icons exit settings-button">exit_to_app</i>
-                                    {(isHost && (data.timed || data.phase === 0)) ? (!inProcess
-                                        ? (<i onClick={() => this.handleClickTogglePause()}
-                                              className="material-icons start-game settings-button">play_arrow</i>)
-                                        : (<i onClick={() => this.handleClickTogglePause()}
-                                              className="material-icons start-game settings-button">pause</i>)) : ""}
-                                    {(isHost && data.paused) ? (data.teamsLocked
-                                        ? (<i onClick={() => this.handleToggleTeamLockClick()}
-                                              className="material-icons start-game settings-button">lock_outline</i>)
-                                        : (<i onClick={() => this.handleToggleTeamLockClick()}
-                                              className="material-icons start-game settings-button">lock_open</i>)) : ""}
+                                    {(isHost && data.paused && data.phase !== 0)
+                                        ? (<i onClick={() => this.handleClickStop()}
+                                              className="toggle-theme material-icons settings-button">stop</i>) : ""}
                                     {(isHost && data.paused) ? (!data.timed
                                         ? (<i onClick={() => this.handleToggleTimed()}
                                               className="material-icons start-game settings-button">alarm_off</i>)
                                         : (<i onClick={() => this.handleToggleTimed()}
                                               className="material-icons start-game settings-button">alarm</i>)) : ""}
-                                    {(isHost && data.paused && data.phase !== 0)
-                                        ? (<i onClick={() => this.handleClickRestart()}
-                                              className="toggle-theme material-icons settings-button">sync</i>) : ""}
+                                    {(isHost && data.paused) ? (data.teamsLocked
+                                        ? (<i onClick={() => this.handleToggleTeamLockClick()}
+                                              className="material-icons start-game settings-button">lock_outline</i>)
+                                        : (<i onClick={() => this.handleToggleTeamLockClick()}
+                                              className="material-icons start-game settings-button">lock_open</i>)) : ""}
+                                    {(isHost && (data.timed || data.phase === 0) && !notEnoughPlayers) ? (!inProcess
+                                        ? (<i onClick={() => this.handleClickTogglePause()}
+                                              className="material-icons start-game settings-button">play_arrow</i>)
+                                        : (<i onClick={() => this.handleClickTogglePause()}
+                                              className="material-icons start-game settings-button">pause</i>)) : ""}
                                     <i onClick={() => this.handleClickChangeName()}
                                        className="toggle-theme material-icons settings-button">edit</i>
                                     {!parseInt(localStorage.muteSounds)

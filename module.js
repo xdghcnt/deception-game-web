@@ -116,10 +116,16 @@ function init(wsServer, path) {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 3) {
                         room.phase = 1;
+                        room.teamsLocked = true;
+                        if (room.timed)
+                            room.paused = false;
                         room.crimeWin = null;
                         room.master = getRandomPlayer([]);
-                        state.murderer = getRandomPlayer([room.master]);
+                        state.assistant = null;
                         state.witness = null;
+                        state.weapon = null;
+                        state.clue = null;
+                        state.murderer = getRandomPlayer([room.master]);
                         if (playersCount > 5) {
                             state.assistant = getRandomPlayer([room.master, state.murderer]);
                             state.witness = getRandomPlayer([room.master, state.murderer, state.assistant]);
@@ -135,19 +141,19 @@ function init(wsServer, path) {
                             user !== null && slot !== room.master ? {
                                 weapons: deckState.weapon.splice(0, 4),
                                 clues: deckState.clue.splice(0, 4),
-                                weaponsMarked: Array(4).fill([]),
-                                cluesMarked: Array(4).fill([]),
-                                weaponsSelected: Array(4).fill([]),
-                                cluesSelected: Array(4).fill([]),
+                                weaponsMarked: Array(4).fill(null).map(() => []),
+                                cluesMarked: Array(4).fill(null).map(() => []),
+                                weaponsSelected: Array(4).fill(null).map(() => []),
+                                cluesSelected: Array(4).fill(null).map(() => []),
                                 hasBadge: true
                             } : null
                         );
                         state.crimePlan = room.playerSlots.map((user) =>
                             user !== null && user !== room.master ? {
-                                weaponsMarked: Array(4).fill([]),
-                                cluesMarked: Array(4).fill([]),
-                                weaponsSelected: Array(4).fill([]),
-                                cluesSelected: Array(4).fill([])
+                                weaponsMarked: Array(4).fill(null).map(() => []),
+                                cluesMarked: Array(4).fill(null).map(() => []),
+                                weaponsSelected: Array(4).fill(null).map(() => []),
+                                cluesSelected: Array(4).fill(null).map(() => [])
                             } : null
                         );
                         startTimer();
@@ -155,6 +161,7 @@ function init(wsServer, path) {
                 },
                 startMaster = () => {
                     room.phase = 2;
+                    state.crimePlan = null;
                     deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 8));
                     room.reconTiles = [3, 4].concat(deckState.recon.splice(0, 4));
                     startTimer();
@@ -210,14 +217,15 @@ function init(wsServer, path) {
                 },
                 getSelectedCard = (slot, type, deselect) => {
                     let selectedCard = {};
-                    (room.phase === 1 ? state.crimePlan : room.cards).some((cardSlot, cardSlotIndex) => cardSlot[`${type}Selected`].some((slots, cardIndex) => {
-                        if (~slots.indexOf(slot)) {
-                            selectedCard = {slot: cardSlotIndex, id: cardIndex};
-                            if (deselect)
-                                slots.splice(slots.indexOf(slot), 1);
-                            return true;
-                        }
-                    }));
+                    (room.phase === 1 ? state.crimePlan : room.cards).filter(slot => slot !== null)
+                        .some((cardSlot, cardSlotIndex) => cardSlot[`${type}Selected`].some((slots, cardIndex) => {
+                            if (~slots.indexOf(slot)) {
+                                selectedCard = {slot: cardSlotIndex, id: cardIndex};
+                                if (deselect)
+                                    slots.splice(slots.indexOf(slot), 1);
+                                return true;
+                            }
+                        }));
                     return selectedCard;
                 },
                 startTimer = () => {
@@ -267,14 +275,16 @@ function init(wsServer, path) {
                 },
                 endGame = () => {
                     room.phase = 0;
+                    room.time = 0;
                     room.paused = true;
                     update();
                     updateState();
                 },
                 removePlayer = (playerId) => {
-                    if (room.spectators.has(playerId))
+                    if (room.spectators.has(playerId)) {
                         registry.disconnectUser(playerId, "Kicked");
-                    else {
+                        room.spectators.delete(playerId);
+                    } else {
                         room.playerSlots[room.playerSlots.indexOf(playerId)] = null;
                         room.spectators.add(playerId);
                         sendState(playerId);
@@ -308,9 +318,9 @@ function init(wsServer, path) {
                     this.lastInteraction = new Date();
                     try {
                         if (this.userEventHandlers[event])
-                            this.userEventHandlers[event](user, data[0], data[1], data[2]);
+                            this.userEventHandlers[event](user, data[0], data[1], data[2], data[3]);
                         else if (this.slotEventHandlers[event] && ~room.playerSlots.indexOf(user))
-                            this.slotEventHandlers[event](room.playerSlots.indexOf(user), data[0], data[1], data[2]);
+                            this.slotEventHandlers[event](room.playerSlots.indexOf(user), data[0], data[1], data[2], data[3]);
                     } catch (error) {
                         console.error(error);
                         registry.log(error.message);
@@ -355,7 +365,8 @@ function init(wsServer, path) {
                         const
                             selectedWeapon = getSelectedCard(slot, "weapons"),
                             selectedClue = getSelectedCard(slot, "clues");
-                        if (selectedWeapon && selectedClue && selectedWeapon.slot === selectedClue.slot === state.murderer) {
+                        if (selectedWeapon && selectedClue
+                            && selectedWeapon.slot === state.murderer && selectedClue.slot === state.murderer) {
                             state.weapon = selectedWeapon.id;
                             state.clue = selectedClue.id;
                             startMaster();
@@ -398,7 +409,7 @@ function init(wsServer, path) {
                     update();
                 },
                 "charge": (slot) => {
-                    if ((room.phase === 3 || room.phase === 4) && room.cards[slot] && room.cards[slot].hasBadge) {
+                    if ((room.phase > 1) && room.cards[slot] && room.cards[slot].hasBadge) {
                         const
                             selectedWeapon = getSelectedCard(slot, "weapons"),
                             selectedClue = getSelectedCard(slot, "clues");
@@ -471,7 +482,8 @@ function init(wsServer, path) {
                             startGame();
                         else
                             room.paused = !room.paused;
-                        room.teamsLocked = !room.teamsLocked;
+                        if (room.paused)
+                            room.teamsLocked = true;
                     }
                     update();
                 },
@@ -483,10 +495,9 @@ function init(wsServer, path) {
                     }
                     update();
                 },
-                "restart-game": (user) => {
+                "abort-game": (user) => {
                     if (user === room.hostId) {
                         endGame();
-                        startGame();
                     }
                     update();
                 },

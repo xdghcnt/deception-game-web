@@ -1,3 +1,7 @@
+.game-board {
+    min-width: 500px;
+}
+
 .player.self {
     font-weight: bold;
 }
@@ -15,6 +19,36 @@
     cursor: default;
     text-align: right;
     z-index: 1;
+}
+
+.little-controls {
+    text-align: left;
+    border-bottom: 1px solid;
+    padding-bottom: 6px;
+    height: 25px;
+}
+
+.little-controls input {
+    width: 45px;
+    background: transparent;
+    border: 1px solid;
+    color: #000000;
+    padding: 2px;
+    margin: 3px;
+}
+
+.little-controls div {
+    display: inline-block;
+}
+
+.little-controls i {
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.little-controls .value {
+    vertical-align: middle;
+    margin: 0 3px;
 }
 
 .host-controls-menu {
@@ -63,23 +97,33 @@
 }
 
 .avatar {
-    width: 160px;
-    height: 160px;
+    width: 144px;
+    height: 183px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     position: relative;
+    box-shadow: inset 0 0 3px 2px black;
+    background-color: #d6d6d6;
 }
 
 .player {
     padding: 3px;
     user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spectators .player {
+
 }
 
 body {
     background: #0e0e0e url(background.jpg) center no-repeat;
     background-size: cover;
     background: #e2d5c4;
+    padding-bottom: 90px;
 }
 
 .kicked {
@@ -118,14 +162,19 @@ body {
 
 .player-host-controls {
     display: none;
-    vertical-align: middle;
+    vertical-align: text-bottom;
 }
 
 .player-host-controls > * {
-    margin-left: 5px;
+    margin-left: 3px;
 }
 
-.player:hover .player-host-controls, .command:hover .player-host-controls {
+.player:hover .player-host-controls {
+    display: flex;
+    flex: 0;
+}
+
+.spectators .player:hover .player-host-controls {
     display: inline-block;
 }
 
@@ -133,6 +182,10 @@ body {
     font-size: 16px;
     cursor: pointer;
     vertical-align: middle;
+}
+
+.avatar:hover .set-avatar-button {
+    display: block;
 }
 
 .set-avatar-button {
@@ -144,14 +197,14 @@ body {
     right: 0;
     top: 0;
     color: #4c4c4c;
-    background: rgba(255, 255, 255, 0.74);
+    background: rgba(212, 212, 212, 0.74);
     z-index: 2;
 }
 
 .switch {
-    width: 80px;
+    width: 38px;
     margin: 0 1%;
-    height: 100px;
+    height: 71px;
     background-image: linear-gradient(#e9e2df 1.6%, #d1c3bb 94.9%, #b4a69f);
     box-shadow: inset 0 10px rgba(255, 255, 255, .7),
     inset 0 11px 1px rgba(250, 250, 250, .2),
@@ -220,8 +273,24 @@ body {
     width: 160px;
     height: 349px;
     background-size: cover;
-    margin-right: 5px;
     border-radius: 10px;
+}
+
+.recon-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.recon-tiles-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.recon-tile {
+    margin: 2px;
+    position: relative;
 }
 
 .top-slots {
@@ -252,15 +321,14 @@ body {
 }
 
 .progress-panel {
-    position: fixed;
+    display: flex;
+    height: 30px;
 }
 
 .speech-panel {
-    position: fixed;
-}
-
-.status-panel {
-    position: fixed;
+    display: flex;
+    align-items: center;
+    width: 220px;
 }
 
 .player-cards > div {
@@ -271,8 +339,16 @@ body {
     text-align: center;
 }
 
-.avatar {
-    background-color: #efebeb;
+.master-slot .player-name {
+    display: block;
+}
+
+.master-slot .player-name-text {
+    width: 75px;
+}
+
+.spectators .player-name-text {
+    display: inline;
 }
 
 .card-face {
@@ -286,9 +362,21 @@ body {
     margin: 2px;
 }
 
+.card.button {
+    cursor: pointer;
+}
+
 .card-selects {
     position: absolute;
+    padding: 4px;
     top: 0;
+    bottom: 9px;
+    right: 0;
+    left: 1px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap-reverse;
+    align-content: flex-start;
 }
 
 .player-slot {
@@ -297,19 +385,28 @@ body {
     padding: 5px;
     background: #adadad;
     box-shadow: 0 0 6px 0px black;
+    background: url(player-background.jpg);
+    color: white;
 }
 
 .player-section {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: 0 4px;
+    margin: 0 9px;
+    align-items: center;
+    width: 150px;
 }
 
-.master-slot {
+.master-slot .player-section {
+    width: auto;
+}
+
+.master-slot.player-slot {
     position: fixed;
     top: 0;
     left: 0;
+    background: gray;
 }
 
 .master-slot .avatar {
@@ -322,7 +419,7 @@ body {
     width: 40px;
     height: 64.2px;
     position: absolute;
-    top: -10px;
+    top: -4px;
     left: -3px;
     background-size: cover;
 }
@@ -332,4 +429,359 @@ body {
     left: auto;
     bottom: -5px;
     right: -4px;
+}
+
+.join-slot-button {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.player-name-text {
+    width: 140px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.player-badge {
+    width: 43px;
+    height: 50px;
+    background: url(badge.png);
+    background-size: cover;
+    background-color: #25232387;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    filter: brightness(1.4);
+}
+
+.player-cards {
+    position: relative;
+}
+
+.player-cards-background {
+    position: absolute;
+    top: -17px;
+    bottom: -13px;
+    left: -20px;
+    right: -20px;
+    background: url(cards-background.png);
+}
+
+.bottom-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 100px;
+    background: gainsboro;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress {
+    padding: 5px;
+    box-shadow: inset 0 0 6px 0px black;
+    background: #969696;
+    color: black;
+}
+
+.progress-round {
+    display: flex;
+}
+
+.progress.active {
+    background: #ead9a5;
+}
+
+.speech-mode {
+    padding: 9px;
+    box-shadow: inset 0 0 6px 0px black;
+}
+
+.speech-mode.active {
+    background: #dcb7b7;
+}
+
+.status-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flip-clock {
+    text-align: center;
+    perspective: 400px;
+}
+
+.flip-clock *,
+.flip-clock *:before,
+.flip-clock *:after {
+    box-sizing: border-box;
+}
+
+.flip-clock__piece {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.flip-clock__slot {
+    font-size: 2vw;
+}
+
+.clock-card {
+    display: block;
+    position: relative;
+    padding-bottom: 0.72em;
+    font-size: 23px;
+    line-height: 0.95;
+}
+
+.card__top,
+.card__bottom,
+.card__back::before,
+.card__back::after {
+    display: block;
+    height: 0.72em;
+    color: #ccc;
+    background: #222;
+    padding: 0.25em 0.25em;
+    border-radius: 0.15em 0.15em 0 0;
+    backface-visiblity: hidden;
+    transform-style: preserve-3d;
+    width: 1.8em;
+    transform: translateZ(0);
+}
+
+.card__bottom {
+    color: #FFF;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    border-top: solid 1px #000;
+    background: #393939;
+    border-radius: 0 0 0.15em 0.15em;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.card__bottom::after {
+    display: block;
+    margin-top: -0.72em;
+}
+
+.card__back::before,
+.card__bottom::after {
+    content: attr(data-value);
+}
+
+.card__back {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    left: 0%;
+    pointer-events: none;
+}
+
+.card__back::before {
+    position: relative;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.flip .card__back::before {
+    animation: flipTop 0.3s cubic-bezier(0.37, 0.01, 0.94, 0.35);
+    animation-fill-mode: both;
+    transform-origin: center bottom;
+}
+
+.flip .card__back .card__bottom {
+    transform-origin: center top;
+    animation-fill-mode: both;
+    animation: flipBottom 0.6s cubic-bezier(0.15, 0.45, 0.28, 1);
+}
+
+@keyframes flipTop {
+    0% {
+        transform: rotateX(0deg);
+        z-index: 2;
+    }
+    0%,
+    99% {
+        opacity: 0.99;
+    }
+    100% {
+        transform: rotateX(-90deg);
+        opacity: 0;
+    }
+}
+
+@keyframes flipBottom {
+    0%,
+    50% {
+        z-index: -1;;
+        transform: rotateX(90deg);
+        opacity: 0;
+    }
+    51% {
+        opacity: 0.99;
+    }
+    100% {
+        opacity: 0.99;
+        transform: rotateX(0deg);
+        z-index: 5;
+    }
+}
+
+.card-check {
+    padding: 2px 6px;
+    border-radius: 25px;
+    font-size: 14px;
+    margin: 2px;
+    border: 2px solid;
+    color: #eae8e8;
+    height: 19px;
+}
+
+.card-check.button.not-set {
+    opacity: 0.5;
+    visibility: hidden;
+}
+
+.card-check.button.not-set:hover {
+    opacity: 0.8;
+}
+
+.card:hover .card-check.button.not-set {
+    visibility: visible;
+}
+
+.card-check.button {
+    cursor: pointer;
+}
+
+.card.correct {
+    box-shadow: 0 0 2px 2px #ea234e;
+}
+
+.card-marks {
+    position: absolute;
+    padding: 4px;
+    top: 0;
+    bottom: -9px;
+    right: 0;
+    left: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.card-mark {
+    width: 7px;
+    height: 17px;
+    transform: rotate(40.4deg);
+    border-radius: 15px;
+    border: 1px solid #dadada;
+    z-index: 1;
+}
+
+.color-picker {
+    cursor: pointer;
+    user-select: none;
+}
+
+.recon-tile-change-location-button {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    color: #14e4a6;
+    padding: 9px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.recon-tile-options {
+    display: flex;
+    flex-direction: column;
+    padding-top: 73px;
+    align-items: center;
+
+}
+
+.recon-tile-option {
+    width: 87%;
+    height: 43px;
+    background: url(bullet.png);
+    background-repeat: no-repeat;
+    background-position: right 9px;
+    background-size: 22px;
+    visibility: hidden;
+    opacity: 0.5;
+    margin: 1px;
+}
+
+.recon-tile.unselected:hover .recon-tile-option {
+    visibility: visible;
+}
+
+.recon-tile.unselected .recon-tile-option {
+    cursor: pointer;
+}
+
+.recon-tile.unselected .recon-tile-option:hover {
+    opacity: 0.8;
+}
+
+.recon-tile-option.selected {
+    visibility: visible;
+    opacity: 1;
+}
+
+.bg-color-0 {
+    background: #c62828;
+}
+
+.bg-color-1 {
+    background: #283593;
+}
+
+.bg-color-2 {
+    background: #2e7d32;
+}
+
+.bg-color-3 {
+    background: #ef6c00;
+}
+
+.bg-color-4 {
+    background: #6a1b9a;
+}
+
+.bg-color-5 {
+    background: #00838f;
+}
+
+.bg-color-6 {
+    background: #b4bf45;
+}
+
+.bg-color-7 {
+    background: #52a6d8;
+}
+
+.bg-color-8 {
+    background: #795548;
+}
+
+.bg-color-9 {
+    background: #d4c00f;
+}
+
+.bg-color-10 {
+    background: #f06292;
+}
+
+.bg-color-11 {
+    background: #757575;
 }
