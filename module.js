@@ -61,6 +61,7 @@ function init(wsServer, path) {
                     reconTiles: [0, 1, 2, 2, 2, 2],
                     reconBullets: {},
                     speechPlayers: new JSONSet(),
+                    playerShot: null,
                     cards: [],
                     crimeWin: null
                 },
@@ -121,6 +122,7 @@ function init(wsServer, path) {
                             room.paused = false;
                         room.crimeWin = null;
                         room.master = getRandomPlayer([]);
+                        room.playerShot = null;
                         state.assistant = null;
                         state.witness = null;
                         state.weapon = null;
@@ -157,7 +159,7 @@ function init(wsServer, path) {
                             } : null
                         );
                         startTimer();
-                    }
+                    } else endGame();
                 },
                 startMaster = () => {
                     room.phase = 2;
@@ -170,16 +172,18 @@ function init(wsServer, path) {
                 },
                 startCommon = () => {
                     room.phase = 3;
+                    state.crimePlan = null;
                     room.crimeWin = true;
                     room.cards.forEach((cardSlot, slot) => {
-                        if (cardSlot !== null)
+                        if (cardSlot !== null && cardSlot !== room.master)
                             room.speechPlayers.add(slot);
                     });
+                    startTimer();
                 },
                 startPerson = () => {
                     room.phase = 4;
                     room.cards.forEach((cardSlot, slot) => {
-                        if (cardSlot !== null)
+                        if (cardSlot !== null && cardSlot !== room.master)
                             room.speechPlayers.add(slot);
                     });
                     room.currentPerson = [...room.speechPlayers][0];
@@ -187,6 +191,7 @@ function init(wsServer, path) {
                 },
                 startWitness = () => {
                     room.crimeWin = false;
+                    room.currentPerson = null;
                     if (state.witness === null)
                         endGame();
                     else {
@@ -217,8 +222,8 @@ function init(wsServer, path) {
                 },
                 getSelectedCard = (slot, type, deselect) => {
                     let selectedCard = {};
-                    (room.phase === 1 ? state.crimePlan : room.cards).filter(slot => slot !== null)
-                        .some((cardSlot, cardSlotIndex) => cardSlot[`${type}Selected`].some((slots, cardIndex) => {
+                    (room.phase === 1 ? state.crimePlan : room.cards)
+                        .some((cardSlot, cardSlotIndex) => cardSlot && cardSlot[`${type}Selected`].some((slots, cardIndex) => {
                             if (~slots.indexOf(slot)) {
                                 selectedCard = {slot: cardSlotIndex, id: cardIndex};
                                 if (deselect)
@@ -252,7 +257,7 @@ function init(wsServer, path) {
                                         endGame();
                                     else if (room.phase === 2) {
                                         const playersCount = room.cards.filter((state) => state !== null).length;
-                                        if (playersCount !== 4 && playersCount !== 6) {
+                                        if (playersCount > 4 && playersCount !== 6) {
                                             removePlayer(room.playerSlots[room.master]);
                                             const newMasterSlot = getRandomPlayer([room.master, state.murderer, state.assistant, state.witness], true);
                                             room.playerSlots[room.master] = room.playerSlots[newMasterSlot];
@@ -273,10 +278,15 @@ function init(wsServer, path) {
                         }, 100);
                     }
                 },
+                isEnoughPlayers = () => room.playerSlots.filter((user) => user !== null).length > 3,
                 endGame = () => {
                     room.phase = 0;
                     room.time = 0;
+                    room.currentPerson = null;
+                    room.speechPlayers.clear();
                     room.paused = true;
+                    if (!isEnoughPlayers())
+                        room.teamsLocked = false;
                     update();
                     updateState();
                 },
@@ -348,7 +358,7 @@ function init(wsServer, path) {
                     if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && ~[0, 1, 2, 3].indexOf(id)
                         && ((room.phase !== 1 && !color)
                             || (color >= 0 && color < room.playerSlots.length && ~[state.murderer, state.assistant].indexOf(slot)))) {
-                        color = color || slot;
+                        color = color === undefined ? slot : color;
                         const cardSlots = (room.phase === 1 ? state.crimePlan : room.cards)[cardSlot][`${type}Marked`][id];
                         if (~cardSlots.indexOf(color))
                             cardSlots.splice(cardSlots.indexOf(color), 1);
@@ -398,7 +408,7 @@ function init(wsServer, path) {
                     update();
                 },
                 "toggle-speech": (slot) => {
-                    if (room.cards[slot] && slot !== room.master && (room.phase === 3 || (room.phase === 4 && room.currentPerson >= slot))) {
+                    if (room.cards[slot] && slot !== room.master && (room.phase === 3 || (room.phase === 4 && room.currentPerson <= slot))) {
                         if (!room.speechPlayers.delete(slot))
                             room.speechPlayers.add(slot);
                         if (room.phase === 3 && room.speechPlayers.size === 0)
@@ -424,6 +434,7 @@ function init(wsServer, path) {
                 },
                 "pick-witness": (slot, witness) => {
                     if (room.phase === 5 && state.murderer === slot) {
+                        room.playerShot = witness;
                         if (state.witness === witness)
                             room.crimeWin = true;
                         endGame();
@@ -478,14 +489,15 @@ function init(wsServer, path) {
                 },
                 "toggle-pause": (user) => {
                     if (user === room.hostId) {
-                        if (room.phase === 0)
-                            startGame();
-                        else
+                        if (room.phase !== 0)
                             room.paused = !room.paused;
-                        if (room.paused)
+                        else if (isEnoughPlayers())
+                            startGame();
+                        if (!room.paused)
                             room.teamsLocked = true;
+                        update();
+                        updateState();
                     }
-                    update();
                 },
                 "toggle-timed": (user) => {
                     if (user === room.hostId) {

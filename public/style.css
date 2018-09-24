@@ -1,5 +1,6 @@
 .game-board {
     min-width: 500px;
+    padding-bottom: 48px;
 }
 
 .player.self {
@@ -18,7 +19,7 @@
     user-select: none;
     cursor: default;
     text-align: right;
-    z-index: 1;
+    z-index: 2;
 }
 
 .little-controls {
@@ -68,6 +69,10 @@
     background: #d4d4d4;
 }
 
+.settings-button.inactive {
+    opacity: 0.3;
+}
+
 .side-buttons {
     display: none;
 }
@@ -76,35 +81,19 @@
     display: inline-block;
 }
 
-.player-container {
-    display: flex;
-    border: 1px solid gainsboro;
-    flex-direction: column;
-    text-align: center;
-    position: relative;
-    margin: 5px;
-    background: rgba(255, 255, 255, 0.74);
-}
-
-.notebook {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
-
 #avatar-input {
     display: none;
 }
 
-.avatar {
-    width: 144px;
-    height: 183px;
+body {
     background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    position: relative;
-    box-shadow: inset 0 0 3px 2px black;
-    background-color: #d6d6d6;
+    background: #3e3e3e;
+}
+
+.kicked {
+    color: white;
+    padding: 22px;
+    text-align: center;
 }
 
 .player {
@@ -115,29 +104,33 @@
     align-items: center;
 }
 
-.spectators .player {
-
+.player-host-controls {
+    display: none;
+    vertical-align: text-bottom;
 }
 
-body {
-    background: #0e0e0e url(background.jpg) center no-repeat;
-    background-size: cover;
-    background: #e2d5c4;
-    padding-bottom: 90px;
+.player-host-controls > * {
+    margin-left: 3px;
 }
 
-.kicked {
-    color: white;
-    padding: 22px;
-    text-align: center;
+.player:hover .player-host-controls {
+    display: flex;
+    flex: 0;
+}
+
+.player .host-button, .command .host-button {
+    font-size: 16px;
+    cursor: pointer;
+    vertical-align: middle;
 }
 
 .spectators-section {
     display: none;
     text-align: center;
     position: fixed;
-    left: 0;
-    bottom: 0;
+    top: 0;
+    right: 0;
+    z-index: 1;
 }
 
 .spectators-section.active {
@@ -160,28 +153,22 @@ body {
     padding: 0;
 }
 
-.player-host-controls {
-    display: none;
-    vertical-align: text-bottom;
-}
-
-.player-host-controls > * {
-    margin-left: 3px;
-}
-
-.player:hover .player-host-controls {
-    display: flex;
-    flex: 0;
-}
-
 .spectators .player:hover .player-host-controls {
     display: inline-block;
 }
 
-.player .host-button, .command .host-button {
-    font-size: 16px;
-    cursor: pointer;
-    vertical-align: middle;
+.avatar {
+    width: 144px;
+    height: 183px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    box-shadow: inset 0 0 3px 2px black;
+    background-color: #d6d6d6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .avatar:hover .set-avatar-button {
@@ -194,17 +181,430 @@ body {
 
 .set-avatar-button i {
     position: absolute;
-    right: 0;
-    top: 0;
+    left: 3px;
+    bottom: 3px;
     color: #4c4c4c;
     background: rgba(212, 212, 212, 0.74);
     z-index: 2;
 }
 
+.top-slots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap-reverse;
+    flex-direction: row-reverse;
+}
+
+.bottom-slots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.middle-slots {
+    display: flex;
+    justify-content: center;
+}
+
+.slot-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.player-name {
+    text-align: center;
+}
+
+.master-slot .player-name {
+    display: block;
+}
+
+.master-slot .player-name-text {
+    width: 75px;
+}
+
+.spectators .player-name-text {
+    display: inline;
+}
+
+.player-slot {
+    display: flex;
+    margin: 6px;
+    padding: 5px;
+    background: #adadad;
+    box-shadow: 0 0 6px 0px black;
+    background: url(player-background.jpg);
+    color: white;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.player-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 9px;
+    align-items: center;
+    width: 150px;
+}
+
+.master-slot .player-section {
+    width: auto;
+    margin: 0;
+}
+
+.master-slot.player-slot {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    background-position: -18px -17px;
+    z-index: 3;
+}
+
+.master-slot .avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.join-slot-button {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.player-name-text {
+    width: 140px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.player-role {
+    background-image: url(roles.jpg);
+    width: 40px;
+    height: 64.2px;
+    position: absolute;
+    top: -4px;
+    left: -3px;
+    background-size: cover;
+}
+
+.master-slot .player-role {
+    top: auto;
+    left: auto;
+    bottom: -5px;
+    right: -4px;
+}
+
+.player-badge {
+    width: 43px;
+    height: 50px;
+    background: url(badge.png);
+    background-size: cover;
+    background-color: #25232387;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    filter: brightness(1.4);
+}
+
+.player-cards {
+    position: relative;
+}
+
+.player-cards > div {
+    display: flex;
+}
+
+.player-cards-background {
+    position: absolute;
+    top: -17px;
+    bottom: -13px;
+    left: -20px;
+    right: -20px;
+    background: url(cards-background.png);
+}
+
+.player-want-speech {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    color: white;
+    border-radius: 25px;
+    padding: 4px;
+    box-shadow: 0 0 5px 1px black;
+    user-select: none;
+    opacity: 0.6;
+}
+
+.player-want-speech.active {
+    opacity: 1;
+}
+
+.player-want-speech.current {
+    box-shadow: 0 0 16px 4px #ffbe05;
+}
+
+.witness-button {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: red;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.witness-button:hover {
+    opacity: 1;
+}
+
+.witness-button i {
+    font-size: 56px;
+}
+
+.player-action-button {
+    padding: 6px;
+    font-weight: bold;
+    box-shadow: 0 0 7px 1px black;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.player-action-button:hover {
+    opacity: 1;
+}
+
+.card {
+    position: relative;
+    margin: 2px;
+}
+
+.card.button {
+    cursor: pointer;
+}
+
+.card-face {
+    width: 72px;
+    height: 111.6px;
+    background-size: cover;
+}
+
+.card-face.weapons {
+    background-image: url(weapons.jpg);
+}
+
+.card-face.clues {
+    background-image: url(clues.jpg);
+}
+
+.card-selects {
+    position: absolute;
+    padding: 4px;
+    top: 0;
+    bottom: 9px;
+    right: 0;
+    left: 1px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap-reverse;
+    align-content: flex-start;
+}
+
+.card-check {
+    padding: 2px 6px;
+    border-radius: 25px;
+    font-size: 14px;
+    margin: 2px;
+    border: 2px solid;
+    color: #eae8e8;
+    height: 19px;
+}
+
+.card-check.button.not-set {
+    opacity: 0.5;
+    visibility: hidden;
+}
+
+.card-check.button.not-set:hover {
+    opacity: 0.8;
+}
+
+.card:hover .card-check.button.not-set {
+    visibility: visible;
+}
+
+.card-check.button {
+    cursor: pointer;
+}
+
+.card.correct {
+    box-shadow: 0 0 2px 2px #ea234e;
+}
+
+.card-marks {
+    position: absolute;
+    padding: 4px;
+    top: 0;
+    bottom: -9px;
+    right: 0;
+    left: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.card-mark {
+    width: 7px;
+    height: 17px;
+    transform: rotate(40.4deg);
+    border-radius: 15px;
+    border: 1px solid #dadada;
+    z-index: 1;
+}
+
+.recon-tile-face {
+    background-image: url(recon.jpg);
+    width: 160px;
+    height: 349px;
+    background-size: cover;
+    border-radius: 10px;
+}
+
+.recon-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.recon-tiles-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.recon-tile {
+    margin: 2px;
+    position: relative;
+}
+
+.recon-tile-change-location-button {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    color: #14e4a6;
+    padding: 9px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.recon-tile-swap-button {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.4;
+}
+
+.recon-tile-swap-button:hover {
+    opacity: 0.8;
+}
+
+.recon-tile-swap-button i {
+    font-size: 35px;
+    background: white;
+}
+
+.recon-tile-options {
+    display: flex;
+    flex-direction: column;
+    padding-top: 73px;
+    align-items: center;
+
+}
+
+.recon-tile-option {
+    width: 87%;
+    height: 43px;
+    background: url(bullet.png);
+    background-repeat: no-repeat;
+    background-position: right 9px;
+    background-size: 22px;
+    visibility: hidden;
+    opacity: 0.5;
+    margin: 1px;
+}
+
+.game.isMaster .recon-tile.unselected:hover .recon-tile-option {
+    visibility: visible;
+}
+
+.recon-tile.unselected .recon-tile-option {
+    cursor: pointer;
+}
+
+.recon-tile.unselected .recon-tile-option:hover {
+    opacity: 0.8;
+}
+
+.recon-tile-option.selected {
+    visibility: visible;
+    opacity: 1;
+}
+
+.recon-tiles {
+    display: flex;
+}
+
+.speech-panel {
+    display: flex;
+    align-items: center;
+    padding: 3px;
+    background: #313131;
+    box-shadow: 0 0 10px 2px #4c4c4c;
+}
+
+.speech-mode {
+    padding: 4px;
+    box-shadow: inset 0 0 6px 0px black;
+    background: #5d5d5d;
+    user-select: none;
+}
+
+.speech-mode.mode-on.active {
+    background: #bedcb7;
+    box-shadow: inset 0px -2px 9px 2px #72d657cf;
+}
+
+.speech-mode.mode-off.active {
+    background: #dcb7b7;
+    box-shadow: inset 0px -2px 9px 2px #d65757cf;
+}
+
+.speech-panel.disabled .switch {
+    opacity: 0.3;
+}
+
+.speech-panel.disabled .speech-mode {
+    box-shadow: inset 0 0 6px 0px black;
+    background: #5d5d5d;
+}
+
+.speech-mode i {
+    font-size: 19px;
+}
+
 .switch {
-    width: 38px;
+    width: 30px;
     margin: 0 1%;
-    height: 71px;
+    height: 54px;
     background-image: linear-gradient(#e9e2df 1.6%, #d1c3bb 94.9%, #b4a69f);
     box-shadow: inset 0 10px rgba(255, 255, 255, .7),
     inset 0 11px 1px rgba(250, 250, 250, .2),
@@ -260,231 +660,33 @@ body {
     border-radius: 2px;
 }
 
-.card-face.weapons {
-    background-image: url(weapons.jpg);
-}
-
-.card-face.clues {
-    background-image: url(clues.jpg);
-}
-
-.recon-tile-face {
-    background-image: url(recon.jpg);
-    width: 160px;
-    height: 349px;
-    background-size: cover;
-    border-radius: 10px;
-}
-
-.recon-tiles {
+.bottom-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 77px;
+    right: 0;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-}
-
-.recon-tiles-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.recon-tile {
-    margin: 2px;
-    position: relative;
-}
-
-.top-slots {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap-reverse;
-}
-
-.bottom-slots {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.middle-slots {
-    display: flex;
-    justify-content: center;
-}
-
-.slot-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.recon-tiles {
-    display: flex;
+    z-index: 2;
 }
 
 .progress-panel {
     display: flex;
     height: 30px;
-}
-
-.speech-panel {
-    display: flex;
-    align-items: center;
-    width: 220px;
-}
-
-.player-cards > div {
-    display: flex;
-}
-
-.player-name {
-    text-align: center;
-}
-
-.master-slot .player-name {
-    display: block;
-}
-
-.master-slot .player-name-text {
-    width: 75px;
-}
-
-.spectators .player-name-text {
-    display: inline;
-}
-
-.card-face {
-    width: 72px;
-    height: 111.6px;
-    background-size: cover;
-}
-
-.card {
-    position: relative;
-    margin: 2px;
-}
-
-.card.button {
-    cursor: pointer;
-}
-
-.card-selects {
-    position: absolute;
-    padding: 4px;
-    top: 0;
-    bottom: 9px;
-    right: 0;
-    left: 1px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap-reverse;
-    align-content: flex-start;
-}
-
-.player-slot {
-    display: flex;
-    margin: 6px;
-    padding: 5px;
-    background: #adadad;
-    box-shadow: 0 0 6px 0px black;
-    background: url(player-background.jpg);
-    color: white;
-}
-
-.player-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin: 0 9px;
-    align-items: center;
-    width: 150px;
-}
-
-.master-slot .player-section {
-    width: auto;
-}
-
-.master-slot.player-slot {
-    position: fixed;
-    top: 0;
-    left: 0;
-    background: gray;
-}
-
-.master-slot .avatar {
-    width: 80px;
-    height: 80px;
-}
-
-.player-role {
-    background-image: url(roles.jpg);
-    width: 40px;
-    height: 64.2px;
-    position: absolute;
-    top: -4px;
-    left: -3px;
-    background-size: cover;
-}
-
-.master-slot .player-role {
-    top: auto;
-    left: auto;
-    bottom: -5px;
-    right: -4px;
-}
-
-.join-slot-button {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.player-name-text {
-    width: 140px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.player-badge {
-    width: 43px;
-    height: 50px;
-    background: url(badge.png);
-    background-size: cover;
-    background-color: #25232387;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    filter: brightness(1.4);
-}
-
-.player-cards {
-    position: relative;
-}
-
-.player-cards-background {
-    position: absolute;
-    top: -17px;
-    bottom: -13px;
-    left: -20px;
-    right: -20px;
-    background: url(cards-background.png);
-}
-
-.bottom-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    height: 100px;
-    background: gainsboro;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 15px;
+    background: #313131;
+    box-shadow: 0 0 10px 2px #4c4c4c;
+    margin: 0 10px;
 }
 
 .progress {
     padding: 5px;
     box-shadow: inset 0 0 6px 0px black;
-    background: #969696;
+    background: #5d5d5d;
     color: black;
+    user-select: none;
 }
 
 .progress-round {
@@ -493,15 +695,52 @@ body {
 
 .progress.active {
     background: #ead9a5;
+    box-shadow: inset 0px -2px 9px 2px #ffab13;
 }
 
-.speech-mode {
-    padding: 9px;
-    box-shadow: inset 0 0 6px 0px black;
+.timer {
+    background: #313131;
+    padding: 13px;
+    box-shadow: 0 0 10px 2px #4c4c4c;
+    user-select: none;
 }
 
-.speech-mode.active {
-    background: #dcb7b7;
+.timer.active .card__top, .timer.active .card__back::before {
+    box-shadow: inset -1px 3px 13px -3px #ffab13;
+}
+
+.card__top,
+.card__bottom,
+.card__back::before,
+.card__back::after {
+    color: #717171;
+}
+
+.card__bottom {
+    color: #888;
+}
+
+.timer.active .card__top,
+.timer.active .card__bottom,
+.timer.active .card__back::before,
+.timer.active .card__back::after {
+    color: #ccc;
+}
+
+.timer.active .card__bottom {
+    color: #FFF;
+}
+
+.color-picker {
+    cursor: pointer;
+    user-select: none;
+    border: 3px solid;
+    border-radius: 3px;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    box-shadow: 0 0 6px 0px black;
+    color: #ffefd4;
 }
 
 .status-panel {
@@ -544,8 +783,7 @@ body {
 .card__back::after {
     display: block;
     height: 0.72em;
-    color: #ccc;
-    background: #222;
+    background: #424242;
     padding: 0.25em 0.25em;
     border-radius: 0.15em 0.15em 0 0;
     backface-visiblity: hidden;
@@ -555,12 +793,11 @@ body {
 }
 
 .card__bottom {
-    color: #FFF;
     position: absolute;
     top: 50%;
     left: 0;
-    border-top: solid 1px #000;
-    background: #393939;
+    border-top: solid 1px #424242;
+    background: #424242;
     border-radius: 0 0 0.15em 0.15em;
     pointer-events: none;
     overflow: hidden;
@@ -620,7 +857,7 @@ body {
 @keyframes flipBottom {
     0%,
     50% {
-        z-index: -1;;
+        z-index: -1;
         transform: rotateX(90deg);
         opacity: 0;
     }
@@ -632,110 +869,6 @@ body {
         transform: rotateX(0deg);
         z-index: 5;
     }
-}
-
-.card-check {
-    padding: 2px 6px;
-    border-radius: 25px;
-    font-size: 14px;
-    margin: 2px;
-    border: 2px solid;
-    color: #eae8e8;
-    height: 19px;
-}
-
-.card-check.button.not-set {
-    opacity: 0.5;
-    visibility: hidden;
-}
-
-.card-check.button.not-set:hover {
-    opacity: 0.8;
-}
-
-.card:hover .card-check.button.not-set {
-    visibility: visible;
-}
-
-.card-check.button {
-    cursor: pointer;
-}
-
-.card.correct {
-    box-shadow: 0 0 2px 2px #ea234e;
-}
-
-.card-marks {
-    position: absolute;
-    padding: 4px;
-    top: 0;
-    bottom: -9px;
-    right: 0;
-    left: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-}
-
-.card-mark {
-    width: 7px;
-    height: 17px;
-    transform: rotate(40.4deg);
-    border-radius: 15px;
-    border: 1px solid #dadada;
-    z-index: 1;
-}
-
-.color-picker {
-    cursor: pointer;
-    user-select: none;
-}
-
-.recon-tile-change-location-button {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    color: #14e4a6;
-    padding: 9px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.recon-tile-options {
-    display: flex;
-    flex-direction: column;
-    padding-top: 73px;
-    align-items: center;
-
-}
-
-.recon-tile-option {
-    width: 87%;
-    height: 43px;
-    background: url(bullet.png);
-    background-repeat: no-repeat;
-    background-position: right 9px;
-    background-size: 22px;
-    visibility: hidden;
-    opacity: 0.5;
-    margin: 1px;
-}
-
-.recon-tile.unselected:hover .recon-tile-option {
-    visibility: visible;
-}
-
-.recon-tile.unselected .recon-tile-option {
-    cursor: pointer;
-}
-
-.recon-tile.unselected .recon-tile-option:hover {
-    opacity: 0.8;
-}
-
-.recon-tile-option.selected {
-    visibility: visible;
-    opacity: 1;
 }
 
 .bg-color-0 {
@@ -784,4 +917,131 @@ body {
 
 .bg-color-11 {
     background: #757575;
+}
+
+.background-list > div {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    opacity: 0;
+    transition: opacity 1s;
+    background-size: cover;
+}
+
+.background-list.win .background-box {
+    box-shadow: inset 0 0 20px 5px #4CAF50;
+}
+
+.background-list.fail .background-box {
+    box-shadow: inset 0 0 20px 5px #FF5722;
+}
+
+.background-box {
+    opacity: 1 !important;
+}
+
+.background-crime {
+    background-image: url(bg-crime.jpg);
+}
+
+.background-reconstruction {
+    background-image: url(bg-reconstruction.jpg);
+}
+
+.background-discussion {
+    background-image: url(bg-discussion.png);
+}
+
+.background-witness {
+    background-image: url(bg-witness.jpg);
+}
+
+.background-crime-lose {
+    background-image: url(bg-crime-fail.jpg);
+}
+
+.background-crime-win {
+    background-image: url(bg-crime-win.jpg);
+}
+
+.background-initial {
+    background-image: url(bg-discussion.png);
+    filter: blur(1px);
+}
+
+.background-list.phase-0 .background-initial {
+    opacity: 1;
+}
+
+.background-list.phase-0.crime-win-true .background-crime-win {
+    opacity: 1;
+}
+
+.background-list.phase-0.crime-win-false .background-crime-lose {
+    opacity: 1;
+}
+
+.background-list.phase-1 .background-crime {
+    opacity: 1;
+}
+
+.background-list.phase-2 .background-reconstruction {
+    opacity: 1;
+}
+
+.background-list.phase-3 .background-discussion, .background-list.phase-4 .background-discussion {
+    opacity: 1;
+}
+
+.background-list.phase-5 .background-witness {
+    opacity: 1;
+}
+
+@media (min-width: 0px) and (max-width: 875px) {
+    .master-slot.player-slot {
+        top: 90px;
+        bottom: auto;
+    }
+
+    .bottom-panel {
+        height: 125px;
+        flex-wrap: wrap;
+        max-width: 685px;
+        margin: auto;
+    }
+
+    .game-board {
+        padding-bottom: 90px;
+    }
+
+    .progress-panel {
+        order: 3;
+    }
+}
+
+.help-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: rgba(255, 252, 245, 0.58);
+    z-index: 2;
+    padding: 6px;
+    user-select: none;
+}
+
+.help-panel:hover {
+    background: rgba(255, 252, 245, 0.86);
+}
+
+.status-message {
+    display: none;
+    margin-left: 5px;
+    margin-top: -2px;
+    vertical-align: super;
+}
+
+.help-panel:hover .status-message {
+    display: inline-block;
 }
