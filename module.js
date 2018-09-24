@@ -79,10 +79,10 @@ function init(wsServer, path) {
                     clue: [],
                     recon: []
                 };
-            [0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
-                room.playerSlots[ind] = `kek${ind}`;
-                room.playerNames[`kek${ind}`] = `kek${ind}`;
-            });
+            //[0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
+            //    room.playerSlots[ind] = `kek${ind}`;
+            //    room.playerNames[`kek${ind}`] = `kek${ind}`;
+            //});
             let interval;
             this.room = room;
             this.state = state;
