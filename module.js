@@ -79,10 +79,10 @@ function init(wsServer, path) {
                     clue: [],
                     recon: []
                 };
-            //[0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
-            //    room.playerSlots[ind] = `kek${ind}`;
-            //    room.playerNames[`kek${ind}`] = `kek${ind}`;
-            //});
+            [0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
+                room.playerSlots[ind] = `kek${ind}`;
+                room.playerNames[`kek${ind}`] = `kek${ind}`;
+            });
             let interval;
             this.room = room;
             this.state = state;
@@ -120,7 +120,7 @@ function init(wsServer, path) {
                         room.teamsLocked = true;
                         if (room.timed)
                             room.paused = false;
-                        room.crimeWin = null;
+                        room.crimeWin = false;
                         room.master = getRandomPlayer([]);
                         room.playerShot = null;
                         state.assistant = null;
@@ -164,6 +164,7 @@ function init(wsServer, path) {
                 startMaster = () => {
                     room.phase = 2;
                     state.crimePlan = null;
+                    room.crimeWin = true;
                     deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 8));
                     room.reconTiles = [3, 4].concat(deckState.recon.splice(0, 4));
                     startTimer();
@@ -256,10 +257,13 @@ function init(wsServer, path) {
                                     if (room.phase === 1)
                                         endGame();
                                     else if (room.phase === 2) {
-                                        const playersCount = room.cards.filter((state) => state !== null).length;
+                                        const playersCount = room.cards.filter((state) => state !== null).length + 1;
                                         if (playersCount > 4 && playersCount !== 6) {
-                                            removePlayer(room.playerSlots[room.master]);
+                                            if (room.playerSlots[room.master])
+                                                removePlayer(room.playerSlots[room.master]);
                                             const newMasterSlot = getRandomPlayer([room.master, state.murderer, state.assistant, state.witness], true);
+                                            if (room.playerSlots[newMasterSlot] === null)
+                                                endGame();
                                             room.playerSlots[room.master] = room.playerSlots[newMasterSlot];
                                             room.playerSlots[newMasterSlot] = null;
                                             room.cards[newMasterSlot] = null;

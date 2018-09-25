@@ -471,6 +471,7 @@ body {
     height: 349px;
     background-size: cover;
     border-radius: 10px;
+    background-clip: padding-box;
 }
 
 .recon-tiles {
@@ -968,7 +969,6 @@ body {
 
 .background-initial {
     background-image: url(bg-discussion.png);
-    filter: blur(1px);
 }
 
 .background-list.phase-0 .background-initial {
@@ -1018,6 +1018,10 @@ body {
 
     .progress-panel {
         order: 3;
+    }
+
+    .player-slot {
+        margin-left: -15px;
     }
 }
 

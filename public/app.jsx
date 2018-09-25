@@ -201,7 +201,7 @@ class PlayerSlot extends React.Component {
                 role = ["witness", "Свидетель. Знает преступников, но не может напрямую об этом сказать, иначе его убьют"];
             else if (data.player.suspects && ~data.player.suspects.indexOf(slot))
                 role = ["crime", "Убийца или сообщник"];
-            else if (data.crimeWin !== null || ~[data.master, data.witness].indexOf(data.userSlot))
+            else if (data.phase === 0 && data.crimeWin !== null || (data.master !== null && data.master === data.userSlot))
                 role = ["investigator", "Обычный следователь"];
             else
                 role = ["unknown", "Роль неизвестна"];
@@ -400,10 +400,10 @@ class Game extends React.Component {
         };
     }
 
-    debouncedEmit(event, data) {
+    debouncedEmit(event, data1, data2) {
         clearTimeout(this.debouncedEmitTimer);
         this.debouncedEmitTimer = setTimeout(() => {
-            this.socket.emit(event, data);
+            this.socket.emit(event, data1, data2);
         }, 100);
     }
 
