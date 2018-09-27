@@ -572,6 +572,10 @@ body {
     box-shadow: 0 0 10px 2px #4c4c4c;
 }
 
+.speech-panel.current {
+    box-shadow: 0 0 28px 7px #ecc15d;
+}
+
 .speech-mode {
     padding: 4px;
     box-shadow: inset 0 0 6px 0px black;
@@ -1001,8 +1005,9 @@ body {
 
 @media (min-width: 0px) and (max-width: 875px) {
     .master-slot.player-slot {
-        top: 90px;
+        top: 97px;
         bottom: auto;
+        margin-left: 0;
     }
 
     .bottom-panel {
@@ -1014,14 +1019,11 @@ body {
 
     .game-board {
         padding-bottom: 90px;
+        padding-top: 9px;
     }
 
     .progress-panel {
         order: 3;
-    }
-
-    .player-slot {
-        margin-left: -15px;
     }
 }
 

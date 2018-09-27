@@ -110,7 +110,7 @@ class Card extends React.Component {
                         return (<div
                             className={`card-check card-check-slot-${selectSlot} bg-color-${selectSlot} ${!hasBadge ? "checked" : ""} ${isPlayer ? "button" : ""}`}
                             onClick={(evt) => !evt.stopPropagation() && isPlayer && props.handleCardSelect(props.cardId)}>
-                            {hasBadge || isRightCard ? "✔" : "✖"}
+                            {hasBadge || props.data.playerSuccess === selectSlot ? "✔" : "✖"}
                         </div>);
                     })}
                     {props.data.userSlot !== null && props.data.master !== props.data.userSlot
@@ -201,7 +201,8 @@ class PlayerSlot extends React.Component {
                 role = ["witness", "Свидетель. Знает преступников, но не может напрямую об этом сказать, иначе его убьют"];
             else if (data.player.suspects && ~data.player.suspects.indexOf(slot))
                 role = ["crime", "Убийца или сообщник"];
-            else if (data.phase === 0 && data.crimeWin !== null || (data.master !== null && data.master === data.userSlot))
+            else if (data.phase === 0 && data.crimeWin !== null
+                || (data.master !== null && data.master === data.userSlot) || data.userSlot === slot)
                 role = ["investigator", "Обычный следователь"];
             else
                 role = ["unknown", "Роль неизвестна"];
@@ -404,7 +405,7 @@ class Game extends React.Component {
         clearTimeout(this.debouncedEmitTimer);
         this.debouncedEmitTimer = setTimeout(() => {
             this.socket.emit(event, data1, data2);
-        }, 100);
+        }, 50);
     }
 
     handleChangeTime(value, type) {
@@ -423,6 +424,10 @@ class Game extends React.Component {
 
     handleToggleTeamLockClick() {
         this.socket.emit("toggle-lock");
+    }
+
+    handleToggleSpeechMode() {
+        this.socket.emit("toggle-speech-mode");
     }
 
     handleClickTogglePause() {
@@ -494,7 +499,8 @@ class Game extends React.Component {
     }
 
     handleCardMark(slot, type, id) {
-        this.socket.emit("mark-card", slot, type, id, this.state.color);
+        const color = this.state.phase === 1 ? this.state.color : undefined;
+        this.socket.emit("mark-card", slot, type, id, color);
     }
 
     handlePlayerJoin(slot) {
@@ -717,7 +723,8 @@ class Game extends React.Component {
                             <div className="bottom-panel">
                                 <div
                                     className={`speech-panel ${!isMaster && ~[3, 4].indexOf(data.phase)
-                                    && (data.phase === 3 || data.currentPerson <= data.userSlot) ? "" : "disabled"}`}>
+                                    && (data.phase === 3 || data.currentPerson <= data.userSlot) ? "" : "disabled"}
+                                    ${(data.userSlot != null && data.currentPerson === data.userSlot) ? "current" : ""}`}>
                                     <div className={`switch ${wantSpeech ? "on" : ""}`}
                                          onClick={() => this.handleToggleSpeech()}/>
                                     <div className="speech-panel-indicators">
@@ -745,8 +752,9 @@ class Game extends React.Component {
                                         </div>
                                     </div>
                                     <div className={`progress ${data.phase === 3 ? "active" : ""}`}>Обсуждение</div>
-                                    <div className={`progress ${data.phase === 4 ? "active" : ""}`}>Высказывания
-                                    </div>
+                                    {data.personalSpeechMode ? (
+                                        <div className={`progress ${data.phase === 4 ? "active" : ""}`}>Высказывания
+                                        </div>) : ""}
                                 </div>
                                 {data.timed ? (<div
                                     className={`timer flip-clock ${data.phase !== 0 && data.timed && data.time ? "active" : ""}`}>
@@ -792,7 +800,7 @@ class Game extends React.Component {
                                                                                 className="material-icons">alarm_add</i>
                                                 {(isHost && !inProcess) ? (<input id="goal"
                                                                                   type="number"
-                                                                                  defaultValue={this.state.crimeTime}
+                                                                                  value={this.state.crimeTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "crime")}
@@ -802,7 +810,7 @@ class Game extends React.Component {
                                                                               className="material-icons">alarm</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
-                                                                                  defaultValue={this.state.masterTime}
+                                                                                  value={this.state.masterTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "master")}
@@ -812,17 +820,18 @@ class Game extends React.Component {
                                                                              className="material-icons">alarm_on</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
-                                                                                  defaultValue={this.state.commonTime}
+                                                                                  value={this.state.commonTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "common")}
                                                 />) : (<span className="value">{this.state.commonTime}</span>)}
                                             </div>
-                                            <div className="set-add-time"><i title="Фаза высказываний"
-                                                                             className="material-icons">timer</i>
+                                            <div className="set-add-time"><i
+                                                title={data.personalSpeechMode ? "Фаза высказываний" : "Последняя фаза обсуджения"}
+                                                className="material-icons">{data.personalSpeechMode ? "timer" : "alarm_on"}</i>
                                                 {(isHost && !inProcess) ? (<input id="round-time"
                                                                                   type="number"
-                                                                                  defaultValue={this.state.personTime}
+                                                                                  value={this.state.personTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
                                                                                       && this.handleChangeTime(evt.target.valueAsNumber, "person")}
@@ -844,6 +853,12 @@ class Game extends React.Component {
                                     {(isHost && data.paused && data.phase !== 0)
                                         ? (<i onClick={() => this.handleClickStop()}
                                               className="toggle-theme material-icons settings-button">stop</i>) : ""}
+                                    {(isHost && data.phase === 0)
+                                        ? (data.personalSpeechMode
+                                            ? (<i onClick={() => this.handleToggleSpeechMode()}
+                                                  className="material-icons start-game settings-button">record_voice_over</i>)
+                                            : (<i onClick={() => this.handleToggleSpeechMode()}
+                                                  className="material-icons start-game settings-button">voice_over_off</i>)) : ""}
                                     {(isHost && data.paused) ? (data.teamsLocked
                                         ? (<i onClick={() => this.handleToggleTeamLockClick()}
                                               className="material-icons start-game settings-button">lock_outline</i>)

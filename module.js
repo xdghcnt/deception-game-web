@@ -6,7 +6,8 @@ function init(wsServer, path) {
         exec = require("child_process").exec,
         app = wsServer.app,
         registry = wsServer.users,
-        channel = "deception";
+        channel = "deception",
+        testMode = false;
 
     app.post("/deception/upload-avatar", function (req, res) {
         registry.log(`who-am-i - ${req.body.userId} - upload-avatar`);
@@ -47,13 +48,15 @@ function init(wsServer, path) {
                     teamsLocked: false,
                     playerAvatars: {},
                     crimeTime: 180,
-                    masterTime: 300,
+                    masterTime: 180,
                     commonTime: 120,
                     personTime: 60,
                     witnessTime: 30,
                     time: null,
                     timed: true,
                     paused: true,
+                    personalSpeechMode: true,
+                    playerSuccess: null,
                     phase: 0,
                     round: 1,
                     master: null,
@@ -79,10 +82,11 @@ function init(wsServer, path) {
                     clue: [],
                     recon: []
                 };
-            [0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
-                room.playerSlots[ind] = `kek${ind}`;
-                room.playerNames[`kek${ind}`] = `kek${ind}`;
-            });
+            if (testMode)
+                [0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
+                    room.playerSlots[ind] = `kek${ind}`;
+                    room.playerNames[`kek${ind}`] = `kek${ind}`;
+                });
             let interval;
             this.room = room;
             this.state = state;
@@ -117,11 +121,13 @@ function init(wsServer, path) {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 3) {
                         room.phase = 1;
+                        room.round = 1;
                         room.teamsLocked = true;
+                        room.playerSuccess = null;
                         if (room.timed)
                             room.paused = false;
                         room.crimeWin = false;
-                        room.master = getRandomPlayer([]);
+                        room.master = getRandomPlayer([room.master]);
                         room.playerShot = null;
                         state.assistant = null;
                         state.witness = null;
@@ -182,13 +188,21 @@ function init(wsServer, path) {
                     startTimer();
                 },
                 startPerson = () => {
-                    room.phase = 4;
-                    room.cards.forEach((cardSlot, slot) => {
-                        if (cardSlot !== null && cardSlot !== room.master)
-                            room.speechPlayers.add(slot);
-                    });
-                    room.currentPerson = [...room.speechPlayers][0];
-                    startTimer();
+                    if (room.personalSpeechMode) {
+                        room.phase = 4;
+                        room.cards.forEach((cardSlot, slot) => {
+                            if (cardSlot !== null && cardSlot !== room.master)
+                                room.speechPlayers.add(slot);
+                        });
+                        room.currentPerson = [...room.speechPlayers][0];
+                        startTimer();
+                    } else {
+                        if (room.round < 3) {
+                            room.round++;
+                            addReconTile();
+                            startCommon();
+                        } else endGame();
+                    }
                 },
                 startWitness = () => {
                     room.crimeWin = false;
@@ -215,6 +229,7 @@ function init(wsServer, path) {
                         startTimer();
                     else if (room.round < 3) {
                         room.round++;
+                        room.currentPerson = null;
                         addReconTile();
                         startCommon();
                     }
@@ -242,7 +257,9 @@ function init(wsServer, path) {
                         else if (room.phase === 2)
                             room.time = room.masterTime * 1000;
                         else if (room.phase === 3)
-                            room.time = room.commonTime * 1000;
+                            room.time = ((!room.personalSpeechMode && room.round === 3)
+                                ? room.personTime
+                                : room.commonTime) * 1000;
                         else if (room.phase === 4)
                             room.time = room.personTime * 1000;
                         else if (room.phase === 5)
@@ -430,8 +447,10 @@ function init(wsServer, path) {
                         if (selectedWeapon && selectedClue && selectedWeapon.slot === selectedClue.slot) {
                             room.cards[slot].hasBadge = false;
                             if (selectedWeapon.slot === state.murderer
-                                && selectedWeapon.id === state.weapon && selectedClue.id === state.clue)
+                                && selectedWeapon.id === state.weapon && selectedClue.id === state.clue) {
+                                room.playerSuccess = slot;
                                 startWitness();
+                            }
                         }
                     }
                     update();
@@ -511,6 +530,19 @@ function init(wsServer, path) {
                     }
                     update();
                 },
+                "toggle-speech-mode": (user) => {
+                    if (user === room.hostId && room.phase === 0) {
+                        room.personalSpeechMode = !room.personalSpeechMode;
+                        if (room.personalSpeechMode) {
+                            room.commonTime = 120;
+                            room.personTime = 60;
+                        } else {
+                            room.commonTime = 60;
+                            room.personTime = 240;
+                        }
+                    }
+                    update();
+                },
                 "abort-game": (user) => {
                     if (user === room.hostId) {
                         endGame();
@@ -564,7 +596,14 @@ function init(wsServer, path) {
     }
 
     function shuffleArray(array) {
-        array.sort(() => (Math.random() - 0.5));
+        let currentIndex = array.length, temporaryValue, randomIndex;
+        while (0 !== currentIndex) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
+        }
         return array;
     }
 
