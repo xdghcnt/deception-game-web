@@ -240,6 +240,10 @@ body {
     z-index: 1;
 }
 
+.player-slot.current {
+    box-shadow: 0 0 44px 16px #ff9f00;
+}
+
 .player-section {
     display: flex;
     flex-direction: column;

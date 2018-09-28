@@ -350,6 +350,28 @@ class Game extends React.Component {
         initArgs.userName = localStorage.userName;
         this.socket = window.socket.of("deception");
         this.socket.on("state", (state) => {
+            if (!this.isMuted() && this.state.inited) {
+                if (this.state.playerShot == null && state.playerShot != null)
+                    this.shotSound.play();
+                if (!this.state.playerSuccess && state.playerSuccess != null)
+                    this.correctSound.play();
+                else if (this.state.cards && this.state.cards.filter((st) => st && st.hasBadge).length
+                    > state.cards.filter((st) => st && st.hasBadge).length)
+                    this.wrongSound.play();
+                if (Object.keys(this.state.reconBullets).filter((ind) => this.state.reconBullets[ind] != null).length
+                    < Object.keys(state.reconBullets).filter((ind) => state.reconBullets[ind] != null).length)
+                    this.bulletSetSound.play();
+                if (this.state.phase === 0 && state.phase === 1)
+                    this.nightSound.play();
+                else if (this.state.phase === 1 && state.phase === 2)
+                    this.reconSound.play();
+                else if (this.state.phase !== 3 && state.phase === 3)
+                    this.voiceActiveSound.play();
+                else if (this.state.phase !== 4 && state.phase === 4)
+                    this.voiceActiveSound.play();
+                else if (this.state.currentPerson !== this.state.userSlot && state.currentPerson === this.state.userSlot)
+                    this.voiceActiveSound.play();
+            }
             this.setState(Object.assign(state, {
                 userId: this.userId,
                 userSlot: ~state.playerSlots.indexOf(this.userId)
@@ -389,6 +411,16 @@ class Game extends React.Component {
         this.socket.on("ping", (id) => {
             this.socket.emit("pong", id);
         });
+        this.correctSound = new Audio("/deception/correct.wav");
+        this.correctSound.volume = 0.5;
+        this.bulletSetSound = new Audio("/deception/bullet-set.wav");
+        this.wrongSound = new Audio("/deception/wrong.mp3");
+        this.wrongSound.volume = 0.5;
+        this.shotSound = new Audio("/deception/shot.wav");
+        this.reconSound = new Audio("/deception/recon-phase.wav");
+        this.reconSound.volume = 0.5;
+        this.voiceActiveSound = new Audio("/deception/voice-active.wav");
+        this.nightSound = new Audio("/deception/night.ogg");
         this.timerSound = new Audio("/deception/tick.mp3");
         this.timerSound.volume = 0.5;
         this.seconds = this.minutes = this.prevSeconds = this.prevMinutes = "00";
@@ -569,6 +601,10 @@ class Game extends React.Component {
         }
     }
 
+    isMuted() {
+        return !!parseInt(localStorage.muteSounds);
+    }
+
     render() {
         try {
             clearInterval(this.timerTimeout);
@@ -654,7 +690,7 @@ class Game extends React.Component {
                         this.seconds = date[2];
                         this.updateClock();
                         if (this.state.timed && !this.state.paused && time < 6000
-                            && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0) && !parseInt(localStorage.muteSounds))
+                            && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0) && !this.isMuted())
                             this.timerSound.play();
                         timeStart = new Date();
                     }, 200);
@@ -873,7 +909,7 @@ class Game extends React.Component {
                                               className="material-icons start-game settings-button">pause</i>)) : ""}
                                     <i onClick={() => this.handleClickChangeName()}
                                        className="toggle-theme material-icons settings-button">edit</i>
-                                    {!parseInt(localStorage.muteSounds)
+                                    {!this.isMuted()
                                         ? (<i onClick={() => this.handleToggleMuteSounds()}
                                               className="toggle-theme material-icons settings-button">volume_up</i>)
                                         : (<i onClick={() => this.handleToggleMuteSounds()}
