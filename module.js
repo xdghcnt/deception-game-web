@@ -450,7 +450,9 @@ function init(wsServer, path) {
                                 && selectedWeapon.id === state.weapon && selectedClue.id === state.clue) {
                                 room.playerSuccess = slot;
                                 startWitness();
-                            }
+                            } else if (room.cards.filter((cards, slotId) => cards && cards.hasBadge
+                                && slotId !== state.murderer
+                                && slotId !== state.assistant).length === 0) endGame();
                         }
                     }
                     update();

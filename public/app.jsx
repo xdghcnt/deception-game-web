@@ -353,7 +353,7 @@ class Game extends React.Component {
             if (!this.isMuted() && this.state.inited) {
                 if (this.state.playerShot == null && state.playerShot != null)
                     this.shotSound.play();
-                if (!this.state.playerSuccess && state.playerSuccess != null)
+                if (this.state.playerSuccess == null && state.playerSuccess != null)
                     this.correctSound.play();
                 else if (this.state.cards && this.state.cards.filter((st) => st && st.hasBadge).length
                     > state.cards.filter((st) => st && st.hasBadge).length)
