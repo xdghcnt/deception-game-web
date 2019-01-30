@@ -312,11 +312,13 @@ function init(wsServer, path) {
                     updateState();
                 },
                 removePlayer = (playerId) => {
-                    if (room.spectators.has(playerId)) {
-                        registry.disconnectUser(playerId, "Kicked");
-                        room.spectators.delete(playerId);
-                    } else {
+                    if (~room.playerSlots.indexOf(playerId))
                         room.playerSlots[room.playerSlots.indexOf(playerId)] = null;
+                    if (room.spectators.has(playerId) || !room.onlinePlayers.has(playerId)) {
+                        delete room.playerNames[playerId];
+                        room.spectators.delete(playerId);
+                        registry.disconnectUser(playerId, "You was removed");
+                    } else {
                         room.spectators.add(playerId);
                         sendState(playerId);
                     }
@@ -581,7 +583,7 @@ function init(wsServer, path) {
         setSnapshot(snapshot) {
             Object.assign(this.room, snapshot.room);
             Object.assign(this.state, snapshot.state);
-            this.room.onlinePlayers = new JSONSet(this.room.onlinePlayers);
+            this.room.onlinePlayers = new JSONSet();
             this.room.spectators = new JSONSet(this.room.spectators);
             this.room.speechPlayers = new JSONSet(this.room.speechPlayers);
             this.room.onlinePlayers.clear();
