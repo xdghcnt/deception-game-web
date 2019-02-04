@@ -411,6 +411,9 @@ class Game extends React.Component {
         this.socket.on("ping", (id) => {
             this.socket.emit("pong", id);
         });
+        this.socket.on("message", text => {
+            alert(text);
+        });
         this.correctSound = new Audio("/deception/correct.wav");
         this.correctSound.volume = 0.5;
         this.bulletSetSound = new Audio("/deception/bullet-set.wav");
