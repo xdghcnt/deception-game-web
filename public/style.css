@@ -1064,3 +1064,11 @@ body {
 .help-panel:hover .status-message {
     display: inline-block;
 }
+
+.popup_modals .modal_buttons .btn.btn_pmry {
+    background-color: #dcc291 !important;;
+}
+
+.popup_modals .modal_buttons .btn.btn_sdry {
+    background-color: #9c9c9c !important;
+}

@@ -67,7 +67,7 @@ class Spectators extends React.Component {
             <div
                 onClick={handleSpectatorsClick}
                 className="spectators">
-                Spectators:
+                Зрители:
                 {
                     data.spectators.length ? data.spectators.map(
                         (player, index) => (<Player key={index} data={data} id={player}
@@ -412,7 +412,7 @@ class Game extends React.Component {
             this.socket.emit("pong", id);
         });
         this.socket.on("message", text => {
-            alert(text);
+            popup.alert({content: text});
         });
         this.correctSound = new Audio("/deception/correct.wav");
         this.correctSound.volume = 0.5;
@@ -449,12 +449,12 @@ class Game extends React.Component {
 
     handleRemovePlayer(id, evt) {
         evt.stopPropagation();
-        this.socket.emit("remove-player", id);
+        popup.confirm({content: `Removing ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
     }
 
     handleGiveHost(id, evt) {
         evt.stopPropagation();
-        this.socket.emit("give-host", id);
+        popup.confirm({content: `Give host ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("give-host", id));
     }
 
     handleToggleTeamLockClick() {
@@ -474,8 +474,7 @@ class Game extends React.Component {
     }
 
     handleClickStop() {
-        if (confirm("Игра будет отменена. Вы уверены?"))
-            this.socket.emit("abort-game");
+        popup.confirm({content: "Игра будет отменена. Вы уверены?"}, (evt) => evt.proceed && this.socket.emit("abort-game"));
     }
 
     handleToggleMuteSounds() {
@@ -493,9 +492,12 @@ class Game extends React.Component {
     }
 
     handleClickChangeName() {
-        const name = prompt("New name");
-        this.socket.emit("change-name", name);
-        localStorage.userName = name;
+        popup.prompt({content: "Новое имя"}, (evt) => {
+            if (evt.proceed && evt.input_value.trim()) {
+                this.socket.emit("change-name", evt.input_value);
+                localStorage.userName = evt.input_value;
+            }
+        });
     }
 
     handleClickSetAvatar() {
@@ -517,7 +519,7 @@ class Game extends React.Component {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         localStorage.avatarId = xhr.responseText;
                         this.socket.emit("update-avatar", localStorage.avatarId);
-                    } else if (xhr.readyState === 4 && xhr.status !== 200) alert("File upload error");
+                    } else if (xhr.readyState === 4 && xhr.status !== 200) popup.alert({content: "File upload error"});
                 };
                 fd.append("avatar", file);
                 fd.append("userId", this.userId);
@@ -525,7 +527,7 @@ class Game extends React.Component {
                 xhr.send(fd);
             }
             else
-                alert("File shouldn't be larger than 5 MB");
+                popup.alert({content: "File shouldn't be larger than 5 MB"});
         }
     }
 
