@@ -584,7 +584,7 @@ function init(wsServer, path) {
             Object.assign(this.room, snapshot.room);
             Object.assign(this.state, snapshot.state);
             this.room.onlinePlayers = new JSONSet();
-            this.room.spectators = new JSONSet(this.room.spectators);
+            this.room.spectators = new JSONSet();
             this.room.speechPlayers = new JSONSet(this.room.speechPlayers);
             this.room.onlinePlayers.clear();
         }
