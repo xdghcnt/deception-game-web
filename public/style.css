@@ -454,7 +454,7 @@ body {
 }
 
 .card.correct {
-    box-shadow: 0 0 2px 2px #ea234e;
+    box-shadow: 0 0 2px 4px #ea234e;
 }
 
 .card-marks {
@@ -1071,4 +1071,23 @@ body {
 
 .popup_modals .modal_buttons .btn.btn_sdry {
     background-color: #9c9c9c !important;
+}
+
+.card-face.back {
+    filter: grayscale(0.5);
+}
+
+.want-master-section {
+    position: fixed;
+    top: 55px;
+    background: rgba(255, 252, 245, 0.58);
+    padding: 6px;
+    left: 0;
+    user-select: none;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.modal_backdrop {
+    z-index: 3;
 }

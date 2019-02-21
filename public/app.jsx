@@ -96,7 +96,7 @@ class Card extends React.Component {
                 className={`card ${isRightCard ? "correct" : ""} ${props.data.userSlot !== null && (props.data.phase > 1 || isCriminal) ? "button" : ""}`}
                 onClick={(evt) => !evt.stopPropagation() && props.handleCardMark(props.cardId)}>
                 <div
-                    className={`card-face ${props.cardType}`}
+                    className={`card-face ${props.cardType} ${props.card === null ? "back" : ""}`}
                     style={{"background-position-x": -position}}/>
                 <div className="card-marks">
                     {(props.marksData || []).map((selectSlot) => (
@@ -266,7 +266,8 @@ class PlayerSlot extends React.Component {
                             || (data.phase === 5 && !isMaster && slot !== data.player.murderer && slot !== data.player.assistant)
                                 ? (<div className="witness-button"
                                         onClick={() => game.handleWitnessClick(slot)}><i
-                                    className="material-icons">my_location</i></div>)
+                                    className="material-icons">{data.playerShot === slot ? "close" : "my_location"}</i>
+                                </div>)
                                 : ""}
                             {data.master !== slot && ~[3, 4].indexOf(data.phase)
                                 ? (<div className={`player-want-speech bg-color-${slot}
@@ -449,7 +450,10 @@ class Game extends React.Component {
 
     handleRemovePlayer(id, evt) {
         evt.stopPropagation();
-        popup.confirm({content: `Removing ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
+        if (!this.state.testMode)
+            popup.confirm({content: `Removing ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
+        else
+            this.socket.emit("remove-player", id);
     }
 
     handleGiveHost(id, evt) {
@@ -529,6 +533,10 @@ class Game extends React.Component {
             else
                 popup.alert({content: "File shouldn't be larger than 5 MB"});
         }
+    }
+
+    toggleWantMaster() {
+        this.socket.emit("toggle-want-master");
     }
 
     handleCardSelect(slot, type, id) {
@@ -833,6 +841,15 @@ class Game extends React.Component {
                                             handleRemovePlayer={(id, evt) => this.handleRemovePlayer(id, evt)}
                                             handleGiveHost={(id, evt) => this.handleGiveHost(id, evt)}/>
                             </div>
+                            {data.phase === 0 ? (
+                                <div className="want-master-section" onClick={() => this.toggleWantMaster()}>
+                                    <div className="want-master-title">Хочу слот Криминалиста:</div>
+                                    <div className="want-master-list">
+                                        {data.wantMasterList.length ? data.wantMasterList.map((it) => (<div>
+                                            {data.playerNames[it]}
+                                        </div>)) : "..."}
+                                    </div>
+                                </div>) : ""}
                             <div className="host-controls">
                                 {data.timed ? (<div className="host-controls-menu">
                                     <div className="little-controls">

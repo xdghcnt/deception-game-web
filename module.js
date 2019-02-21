@@ -7,7 +7,7 @@ function init(wsServer, path) {
         app = wsServer.app,
         registry = wsServer.users,
         channel = "deception",
-        testMode = false;
+        testMode = process.argv[2] === "debug";
 
     app.post("/deception/upload-avatar", function (req, res) {
         registry.log(`who-am-i - ${req.body.userId} - upload-avatar`);
@@ -44,18 +44,20 @@ function init(wsServer, path) {
                     spectators: new JSONSet(),
                     playerNames: {},
                     onlinePlayers: new JSONSet(),
+                    wantMasterList: new JSONSet(),
+                    prevMaster: null,
                     playerSlots: Array(12).fill(null),
                     teamsLocked: false,
                     playerAvatars: {},
                     crimeTime: 180,
                     masterTime: 180,
-                    commonTime: 120,
-                    personTime: 60,
+                    commonTime: 60,
+                    personTime: 240,
                     witnessTime: 30,
                     time: null,
                     timed: true,
                     paused: true,
-                    personalSpeechMode: true,
+                    personalSpeechMode: false,
                     playerSuccess: null,
                     phase: 0,
                     round: 1,
@@ -66,7 +68,8 @@ function init(wsServer, path) {
                     speechPlayers: new JSONSet(),
                     playerShot: null,
                     cards: [],
-                    crimeWin: null
+                    crimeWin: null,
+                    testMode
                 },
                 state = {
                     witness: null,
@@ -127,7 +130,10 @@ function init(wsServer, path) {
                         if (room.timed)
                             room.paused = false;
                         room.crimeWin = false;
-                        room.master = getRandomPlayer([room.master]);
+                        room.master = getRandomPlayer(room.wantMasterList.size
+                            ? room.playerSlots.filter((user) => !room.wantMasterList.has(user)).map((user) => room.playerSlots.indexOf(user))
+                            : [room.playerSlots.indexOf(room.prevMaster)]);
+                        room.wantMasterList.clear();
                         room.playerShot = null;
                         state.assistant = null;
                         state.witness = null;
@@ -308,10 +314,12 @@ function init(wsServer, path) {
                     room.paused = true;
                     if (!isEnoughPlayers())
                         room.teamsLocked = false;
+                    room.prevMaster = room.playerSlots[room.master] || null;
                     update();
                     updateState();
                 },
                 removePlayer = (playerId) => {
+                    room.wantMasterList.delete(playerId);
                     if (~room.playerSlots.indexOf(playerId))
                         room.playerSlots[room.playerSlots.indexOf(playerId)] = null;
                     if (room.spectators.has(playerId) || !room.onlinePlayers.has(playerId)) {
@@ -509,10 +517,18 @@ function init(wsServer, path) {
                 "spectators-join": (user) => {
                     if (!room.teamsLocked && ~room.playerSlots.indexOf(user)) {
                         room.playerSlots[room.playerSlots.indexOf(user)] = null;
+                        room.wantMasterList.delete(user);
                         room.spectators.add(user);
                         update();
                         sendState(user);
                     }
+                },
+                "toggle-want-master": (user) => {
+                    if (~room.playerSlots.indexOf(user) && room.prevMaster !== user && !room.wantMasterList.has(user))
+                        room.wantMasterList.add(user);
+                    else
+                        room.wantMasterList.delete(user);
+                    update();
                 },
                 "toggle-pause": (user) => {
                     if (user === room.hostId) {
