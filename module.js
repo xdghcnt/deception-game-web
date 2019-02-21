@@ -602,6 +602,7 @@ function init(wsServer, path) {
             this.room.onlinePlayers = new JSONSet();
             this.room.spectators = new JSONSet();
             this.room.speechPlayers = new JSONSet(this.room.speechPlayers);
+            this.room.wantMasterList = new JSONSet(this.room.wantMasterList);
             this.room.onlinePlayers.clear();
         }
     }
