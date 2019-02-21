@@ -16,6 +16,10 @@
     text-decoration: line-through;
 }
 
+.no-player .player.offline .player-name-text {
+    text-decoration: none;
+}
+
 .spectators .player.offline .player-name-text {
     box-shadow: none;
 }
@@ -1090,5 +1094,5 @@ body {
 }
 
 .modal_backdrop {
-    z-index: 3;
+    z-index: 3 !important;
 }

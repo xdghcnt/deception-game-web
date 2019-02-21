@@ -17,13 +17,9 @@ class Player extends React.Component {
             id = this.props.id,
             hasPlayer = id !== null;
         return (
-            <div className={
-                "player"
-                + (!~data.onlinePlayers.indexOf(id) ? " offline" : "")
-                + (id === data.userId ? " self" : "")
-            }
+            <div className={cs("player", {offline: !~data.onlinePlayers.indexOf(id), self: id === data.userId})}
                  data-playerId={id}>
-                <div className={`player-name-text bg-color-${this.props.slot}`}>
+                <div className={cs("player-name-text", `bg-color-${this.props.slot}`)}>
                     {hasPlayer
                         ? data.playerNames[id]
                         : (data.teamsLocked
@@ -93,14 +89,17 @@ class Card extends React.Component {
                     && props.data.player[props.cardType === "weapons" ? "weapon" : "clue"] === props.cardId,
                 isCriminal = props.data.userSlot !== null && (props.data.userSlot === props.data.player.murderer || props.data.userSlot === props.data.player.assistant);
             return (<div
-                className={`card ${isRightCard ? "correct" : ""} ${props.data.userSlot !== null && (props.data.phase > 1 || isCriminal) ? "button" : ""}`}
+                className={cs("card", {
+                    correct: isRightCard,
+                    button: props.data.userSlot !== null && (props.data.phase > 1 || isCriminal)
+                })}
                 onClick={(evt) => !evt.stopPropagation() && props.handleCardMark(props.cardId)}>
                 <div
-                    className={`card-face ${props.cardType} ${props.card === null ? "back" : ""}`}
+                    className={cs("card-face", props.cardType, {back: props.card === null})}
                     style={{"background-position-x": -position}}/>
                 <div className="card-marks">
                     {(props.marksData || []).map((selectSlot) => (
-                        <div className={`card-mark card-mark-slot-${selectSlot} bg-color-${selectSlot}`}/>))}
+                        <div className={cs("card-mark", `card-mark-slot-${selectSlot}`, `bg-color-${selectSlot}`)}/>))}
                 </div>
                 <div className="card-selects">
                     {(props.selectsData || []).map((selectSlot) => {
@@ -108,7 +107,10 @@ class Card extends React.Component {
                             hasBadge = props.data.cards[selectSlot] && props.data.cards[selectSlot].hasBadge,
                             isPlayer = props.data.userSlot === selectSlot;
                         return (<div
-                            className={`card-check card-check-slot-${selectSlot} bg-color-${selectSlot} ${!hasBadge ? "checked" : ""} ${isPlayer ? "button" : ""}`}
+                            className={cs("card-check", `card-check-slot-${selectSlot}`, `bg-color-${selectSlot}`, {
+                                checked: !hasBadge,
+                                button: isPlayer
+                            })}
                             onClick={(evt) => !evt.stopPropagation() && isPlayer && props.handleCardSelect(props.cardId)}>
                             {hasBadge || props.data.playerSuccess === selectSlot ? "✔" : "✖"}
                         </div>);
@@ -119,7 +121,7 @@ class Card extends React.Component {
                     && !~(props.selectsData || []).indexOf(props.data.userSlot)
                         ? (
                             <div
-                                className={`card-check card-check-slot-${props.data.userSlot} bg-color-${props.data.userSlot} button not-set`}
+                                className={cs("card-check", `card-check-slot-${props.data.userSlot}`, `bg-color-${props.data.userSlot}`, "button", "not-set")}
                                 onClick={(evt) => !evt.stopPropagation() && props.handleCardSelect(props.cardId)}>✔</div>)
                         : ""}
                 </div>
@@ -138,14 +140,15 @@ class ReconTile extends React.Component {
                 props = this.props,
                 unselected = props.data.phase > 1 && props.data.reconBullets[props.tileId] === undefined,
                 isMaster = props.data.userSlot === props.data.master;
-            return (<div className={`recon-tile ${unselected ? "unselected" : ""}`}>
+            return (<div className={cs("recon-tile", {unselected})}>
                 <div className="recon-tile-face" style={{"background-position-x": props.tile * -160}}>
                     <div className="recon-tile-options">
                         {Array(6).fill(null).map((v, id) => (
                             <div
-                                className={`recon-tile-option ${props.data.reconBullets[props.tileId] !== null
-                                    ? (props.data.reconBullets[props.tileId] === id ? "selected" : "")
-                                    : "button"}`}
+                                className={cs("recon-tile-option", {
+                                    selected: props.data.reconBullets[props.tileId] === id,
+                                    button: props.data.reconBullets[props.tileId] === null
+                                })}
                                 onClick={() => props.data.reconBullets[props.tileId] !== null
                                     && props.game.handleSetBullet(props.tileId, id)}/>))}
                     </div>
@@ -239,12 +242,14 @@ class PlayerSlot extends React.Component {
             }
             return (
                 <div
-                    className={`player-slot ${~data.speechPlayers.indexOf(slot) ? "want-speech" : ""}
-                            ${data.currentPerson === slot ? "current" : ""}
-                            ${isMaster ? "master-slot" : ""}
-                            player-slot-${slot}`}>
+                    className={cs("player-slot", `player-slot-${slot}`, {
+                        current: data.currentPerson === slot,
+                        "want-speech": ~data.speechPlayers.indexOf(slot),
+                        "master-slot": isMaster,
+                        "no-player": player === null
+                    })}>
                     <div className="player-section">
-                        <div className={`avatar ${player !== null ? "" : "no-player"}`}
+                        <div className={cs("avatar", {"no-player": player === null})}
                              style={{
                                  "background-image": player !== null ? `url(/deception/${data.playerAvatars[player]
                                      ? `avatars/${player}/${data.playerAvatars[player]}.png`
@@ -270,9 +275,10 @@ class PlayerSlot extends React.Component {
                                 </div>)
                                 : ""}
                             {data.master !== slot && ~[3, 4].indexOf(data.phase)
-                                ? (<div className={`player-want-speech bg-color-${slot}
-                                ${(data.phase === 3 ? wantSpeech : wantSpeech && currentPerson) ? "active" : ""}
-                                ${currentPerson ? "current" : ""}`}>
+                                ? (<div className={cs("player-want-speech", `bg-color-${slot}`, {
+                                    active: data.phase === 3 ? wantSpeech : wantSpeech && currentPerson,
+                                    current: currentPerson
+                                })}>
                                     <i className="material-icons">{wantSpeech
                                         ? "volume_up"
                                         : "volume_off"}</i>
@@ -281,13 +287,13 @@ class PlayerSlot extends React.Component {
                             {showActionButton
                                 ? (<div className="player-action-button-wrap">
                                     <div onClick={() => game.handleActionButton()}
-                                         className={`player-action-button bg-color-${slot}`}>
+                                         className={cs("player-action-button", `bg-color-${slot}`)}>
                                         {data.phase === 1 ? "Подтвердить" : "Обвинить"}</div>
                                 </div>)
                                 : ""}
                             {data.phase === 1 && data.userSlot === slot &&
                             (data.userSlot === data.player.murderer || data.userSlot === data.player.assistant)
-                                ? <div className={`color-picker bg-color-${data.color}`}
+                                ? <div className={cs("color-picker", `bg-color-${data.color}`)}
                                        onClick={() => game.handleChangeColor()}>
                                     <i className="material-icons">brush</i>
                                 </div>
@@ -523,7 +529,7 @@ class Game extends React.Component {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         localStorage.avatarId = xhr.responseText;
                         this.socket.emit("update-avatar", localStorage.avatarId);
-                    } else if (xhr.readyState === 4 && xhr.status !== 200) popup.alert({content: "File upload error"});
+                    } else if (xhr.readyState === 4 && xhr.status !== 200) popup.alert({content: "Ошибка загрузки"});
                 };
                 fd.append("avatar", file);
                 fd.append("userId", this.userId);
@@ -531,12 +537,17 @@ class Game extends React.Component {
                 xhr.send(fd);
             }
             else
-                popup.alert({content: "File shouldn't be larger than 5 MB"});
+                popup.alert({content: "Файл не должен занимать больше 5Мб"});
         }
     }
 
     toggleWantMaster() {
-        this.socket.emit("toggle-want-master");
+        if (~this.state.spectators.indexOf(this.state.userId))
+            popup.alert({content: "Сначала займите игровой слот"});
+        else if (this.state.prevMaster === this.state.userId)
+            popup.alert({content: "Вы уже были Криминалистом в прошлый раз"});
+        else
+            this.socket.emit("toggle-want-master");
     }
 
     handleCardSelect(slot, type, id) {
@@ -632,6 +643,9 @@ class Game extends React.Component {
                     parentDir = location.pathname.match(/(.+?)\//)[1],
                     wantSpeech = !!~data.speechPlayers.indexOf(data.userSlot),
                     notEnoughPlayers = data.phase === 0 && data.playerSlots.filter((slot) => slot !== null).length < 4,
+                    isSomebodyWin = !(data.phase !== 0 || data.crimeWin === null),
+                    isUserWin = isSomebodyWin && ((!~data.spectators.indexOf(data.userId) && (data.userSlot === data.player.murderer
+                        || data.userSlot === data.player.assistant)) ? data.crimeWin : !data.crimeWin),
                     isMaster = data.master === data.userSlot;
                 let status;
                 if (data.time) {
@@ -719,12 +733,13 @@ class Game extends React.Component {
                     slots = (showEmptySlots ? data.playerSlots : activeSlots)
                         .map((value, slot) => showEmptySlots ? slot : value);
                 return (
-                    <div className={`game ${isMaster ? "isMaster" : ""}`}>
+                    <div className={cs("game", {isMaster})}>
                         <div
-                            className={`background-list phase-${data.phase}
-                            ${data.phase !== 0 || data.crimeWin === null ? "" : `crime-win-${data.crimeWin ? "true" : "false"}
-                            ${((data.userSlot === data.player.murderer
-                                || data.userSlot === data.player.assistant) ? data.crimeWin : !data.crimeWin) ? "win" : "fail"}`}`}>
+                            className={cs("background-list", `phase-${data.phase}`, {
+                                [`crime-win-${data.crimeWin ? "true" : "false"}`]: isSomebodyWin,
+                                win: isUserWin,
+                                fail: isSomebodyWin && !isUserWin
+                            })}>
                             <div className="background-witness"/>
                             <div className="background-discussion"/>
                             <div className="background-reconstruction"/>
@@ -734,7 +749,7 @@ class Game extends React.Component {
                             <div className="background-crime-lose"/>
                             <div className="background-box"/>
                         </div>
-                        <div className={`game-board ${(this.state.inited ? "active" : "")}`}>
+                        <div className={cs("game-board", {active: this.state.inited})}>
                             <div className="slot-list">
                                 <div className="top-slots">
                                     {slots.slice(0, Math.floor(playerCount / 2)).reverse().map((slot) => (
@@ -771,42 +786,44 @@ class Game extends React.Component {
                                 </div>) : ""}
                             <div className="bottom-panel">
                                 <div
-                                    className={`speech-panel ${!isMaster && ~[3, 4].indexOf(data.phase)
-                                    && (data.phase === 3 || data.currentPerson <= data.userSlot) ? "" : "disabled"}
-                                    ${(data.userSlot != null && data.currentPerson === data.userSlot) ? "current" : ""}`}>
-                                    <div className={`switch ${wantSpeech ? "on" : ""}`}
+                                    className={cs("speech-panel", {
+                                        disabled: !(!isMaster && ~[3, 4].indexOf(data.phase)
+                                            && (data.phase === 3 || data.currentPerson <= data.userSlot)),
+                                        current: data.userSlot != null && data.currentPerson === data.userSlot
+                                    })}>
+                                    <div className={cs("switch", {on: wantSpeech})}
                                          onClick={() => this.handleToggleSpeech()}/>
                                     <div className="speech-panel-indicators">
-                                        <div className={`speech-mode mode-on ${wantSpeech ? "active" : ""}`}
+                                        <div className={cs("speech-mode", "mode-on", {active: wantSpeech})}
                                              title="Мне есть, что сказать"><i className="material-icons">mic</i>
                                         </div>
-                                        <div className={`speech-mode mode-off ${!wantSpeech ? "active" : ""}`}
+                                        <div className={cs("speech-mode", "mode-off", {active: !wantSpeech})}
                                              title="Больше нечего сказать"><i className="material-icons">mic_off</i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="progress-panel">
-                                    <div className={`progress ${data.phase === 1 ? "active" : ""}`}>Убийство</div>
-                                    <div className={`progress ${data.phase === 2 ? "active" : ""}`}>Реконструкция
+                                    <div className={cs("progress", {active: data.phase === 1})}>Убийство</div>
+                                    <div className={cs("progress", {active: data.phase === 2})}>Реконструкция
                                     </div>
                                     <div className="progress-round">
                                         <div
-                                            className={`progress ${data.phase > 2 && data.phase < 5 && data.round === 1 ? "active" : ""}`}>1
+                                            className={cs("progress", {active: data.phase > 2 && data.phase < 5 && data.round === 1})}>1
                                         </div>
                                         <div
-                                            className={`progress ${data.phase > 2 && data.phase < 5 && data.round === 2 ? "active" : ""}`}>2
+                                            className={cs("progress", {active: data.phase > 2 && data.phase < 5 && data.round === 2})}>2
                                         </div>
                                         <div
-                                            className={`progress ${data.phase > 2 && data.phase < 5 && data.round === 3 ? "active" : ""}`}>3
+                                            className={cs("progress", {active: data.phase > 2 && data.phase < 5 && data.round === 3})}>3
                                         </div>
                                     </div>
-                                    <div className={`progress ${data.phase === 3 ? "active" : ""}`}>Обсуждение</div>
+                                    <div className={cs("progress", {active: data.phase === 3})}>Обсуждение</div>
                                     {data.personalSpeechMode ? (
-                                        <div className={`progress ${data.phase === 4 ? "active" : ""}`}>Высказывания
+                                        <div className={cs("progress", {active: data.phase === 4})}>Высказывания
                                         </div>) : ""}
                                 </div>
                                 {data.timed ? (<div
-                                    className={`timer flip-clock ${data.phase !== 0 && data.timed && data.time ? "active" : ""}`}>
+                                    className={cs("timer", "flip-clock", {active: data.phase !== 0 && data.timed && data.time})}>
                                     <span className="flip-clock__piece flip">
                                         <b className="flip-clock__card clock-card">
                                             <b className="card__top">{this.minutes}</b>
@@ -832,10 +849,8 @@ class Game extends React.Component {
                                    className="material-icons">help</i>
                                 <div className="status-message">{status}</div>
                             </div>
-                            <div className={
-                                "spectators-section"
-                                + ((data.spectators.length > 0 || !data.teamsLocked) ? " active" : "")
-                            }>
+                            <div
+                                className={cs("spectators-section", {active: data.spectators.length > 0 || !data.teamsLocked})}>
                                 <Spectators data={this.state}
                                             handleSpectatorsClick={() => this.handleSpectatorsClick()}
                                             handleRemovePlayer={(id, evt) => this.handleRemovePlayer(id, evt)}
