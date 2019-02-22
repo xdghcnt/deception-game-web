@@ -431,7 +431,7 @@ function init(wsServer, path) {
                     update();
                 },
                 "swap-recon-tile": (slot, tile) => {
-                    if (room.master === slot && room.reconTiles.length === 7 && room.reconBullets[6]) {
+                    if (room.master === slot && room.reconTiles.length === 7 && room.reconBullets[6] && tile > 1) {
                         room.reconTiles[tile] = room.reconTiles.pop();
                         room.reconBullets[tile] = room.reconBullets[6];
                         delete room.reconBullets[6];

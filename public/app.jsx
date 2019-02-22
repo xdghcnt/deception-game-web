@@ -153,7 +153,7 @@ class ReconTile extends React.Component {
                                     && props.game.handleSetBullet(props.tileId, id)}/>))}
                     </div>
                 </div>
-                {isMaster && props.data.reconTiles.length > 6 && props.tileId !== 6 ? (
+                {isMaster && props.data.reconTiles.length > 6 && props.tileId !== 6 && props.tileId > 1 && props.data.reconBullets[6] != null ? (
                     <div className="recon-tile-swap-button"
                          onClick={() => props.game.handleSwapReconTile(props.tileId)}>
                         <i className="material-icons">repeat</i>
