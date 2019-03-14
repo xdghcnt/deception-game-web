@@ -18,7 +18,8 @@ class Player extends React.Component {
             hasPlayer = id !== null;
         return (
             <div className={cs("player", {offline: !~data.onlinePlayers.indexOf(id), self: id === data.userId})}
-                 data-playerId={id}>
+                 data-playerId={id}
+                 onTouchStart={(e) => e.target.focus()}>
                 <div className={cs("player-name-text", `bg-color-${this.props.slot}`)}>
                     {hasPlayer
                         ? data.playerNames[id]
@@ -93,6 +94,7 @@ class Card extends React.Component {
                     correct: isRightCard,
                     button: props.data.userSlot !== null && (props.data.phase > 1 || isCriminal)
                 })}
+                onTouchStart={(e) => e.target.focus()}
                 onClick={(evt) => !evt.stopPropagation() && props.handleCardMark(props.cardId)}>
                 <div
                     className={cs("card-face", props.cardType, {back: props.card === null})}
@@ -224,8 +226,7 @@ class PlayerSlot extends React.Component {
                     });
                     showActionButton = weaponSelected && clueSelected;
                 }
-            }
-            else if (data.phase > 1 && data.cards[data.userSlot] && data.cards[data.userSlot].hasBadge) {
+            } else if (data.phase > 1 && data.cards[data.userSlot] && data.cards[data.userSlot].hasBadge) {
                 let weaponSelectedSlot, clueSelectedSlot;
                 const cardsSlot = data.cards[slot];
                 if (cardsSlot) {
@@ -250,6 +251,7 @@ class PlayerSlot extends React.Component {
                     })}>
                     <div className="player-section">
                         <div className={cs("avatar", {"no-player": player === null})}
+                             onTouchStart={(e) => e.target.focus()}
                              style={{
                                  "background-image": player !== null ? `url(/deception/${data.playerAvatars[player]
                                      ? `avatars/${player}/${data.playerAvatars[player]}.png`
@@ -389,6 +391,8 @@ class Game extends React.Component {
             }));
         });
         this.socket.on("player-state", (player) => {
+            if (this.state.player && this.state.player.murderer !== this.state.userSlot && player.murderer === this.state.userSlot)
+                popup.alert({content: "Вы убийца!"});
             if (this.state.color === undefined)
                 if (player.murderer === this.state.userSlot)
                     this.state.color = 0;
@@ -535,8 +539,7 @@ class Game extends React.Component {
                 fd.append("userId", this.userId);
                 fd.append("userToken", this.userToken);
                 xhr.send(fd);
-            }
-            else
+            } else
                 popup.alert({content: "Файл не должен занимать больше 5Мб"});
         }
     }
@@ -844,7 +847,7 @@ class Game extends React.Component {
                                     </span>
                                 </div>) : ""}
                             </div>
-                            <div className="help-panel">
+                            <div className="help-panel" onTouchStart={(e) => e.target.focus()}>
                                 <i onClick={() => this.showHelp()}
                                    className="material-icons">help</i>
                                 <div className="status-message">{status}</div>
@@ -865,7 +868,7 @@ class Game extends React.Component {
                                         </div>)) : "..."}
                                     </div>
                                 </div>) : ""}
-                            <div className="host-controls">
+                            <div className="host-controls" onTouchStart={(e) => e.target.focus()}>
                                 {data.timed ? (<div className="host-controls-menu">
                                     <div className="little-controls">
                                         <div className="game-settings little-controls">
@@ -958,8 +961,7 @@ class Game extends React.Component {
                         </div>
                     </div>
                 );
-            }
-            else return (<div/>);
+            } else return (<div/>);
         } catch (error) {
             console.error(error);
             debugger;
