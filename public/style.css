@@ -405,9 +405,8 @@ body {
 }
 
 .card-face {
-    width: 72px;
-    height: 111.6px;
-    background-size: cover;
+    width: 73px;
+    height: 112px;
 }
 
 .card-face.weapons {

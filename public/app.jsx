@@ -84,7 +84,7 @@ class Card extends React.Component {
                 props = this.props,
                 position = props.card === null
                     ? 0
-                    : ((props.card + 1) * 72),
+                    : ((props.card + 1) * 72.26),
                 isRightCard = props.data.player.weapon !== null
                     && props.data.player.murderer === props.slot
                     && props.data.player[props.cardType === "weapons" ? "weapon" : "clue"] === props.cardId,
@@ -391,7 +391,8 @@ class Game extends React.Component {
             }));
         });
         this.socket.on("player-state", (player) => {
-            if (this.state.player && this.state.player.murderer !== this.state.userSlot && player.murderer === this.state.userSlot)
+            if (this.state.player && this.state.player.murderer !== this.state.userSlot && this.state.userSlot !== null
+                && player.murderer === this.state.userSlot)
                 popup.alert({content: "Вы убийца!"});
             if (this.state.color === undefined)
                 if (player.murderer === this.state.userSlot)
