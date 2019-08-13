@@ -325,7 +325,7 @@ function init(wsServer, path) {
                     if (room.spectators.has(playerId) || !room.onlinePlayers.has(playerId)) {
                         delete room.playerNames[playerId];
                         room.spectators.delete(playerId);
-                        registry.disconnectUser(playerId, "You was removed");
+                        this.emit("user-kicked", playerId);
                     } else {
                         room.spectators.add(playerId);
                         sendState(playerId);
