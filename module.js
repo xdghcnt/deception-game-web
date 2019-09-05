@@ -387,7 +387,7 @@ function init(wsServer, path) {
                 },
                 "mark-card": (slot, cardSlot, type, id, color) => {
                     if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && ~[0, 1, 2, 3].indexOf(id)
-                        && ((room.phase !== 1 && !color)
+                        && ((room.phase !== 1 && !color && room.master !== slot)
                             || (color >= 0 && color < room.playerSlots.length && ~[state.murderer, state.assistant].indexOf(slot)))) {
                         color = color === undefined ? slot : color;
                         const cardSlots = (room.phase === 1 ? state.crimePlan : room.cards)[cardSlot][`${type}Marked`][id];
