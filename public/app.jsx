@@ -357,6 +357,7 @@ class Game extends React.Component {
         initArgs.userId = this.userId = localStorage.deceptionUserId;
         initArgs.token = this.userToken = localStorage.deceptionUserToken;
         initArgs.userName = localStorage.userName;
+        initArgs.wssToken = window.wssToken;
         this.socket = window.socket.of("deception");
         this.socket.on("state", (state) => {
             if (!this.isMuted() && this.state.inited) {
