@@ -1098,4 +1098,5 @@ body {
 
 .room-main-link {
     padding: 4px;
+    z-index: 1;
 }
