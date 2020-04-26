@@ -1047,7 +1047,7 @@ body {
 .help-panel {
     position: fixed;
     left: 0;
-    top: 0;
+    bottom: 0;
     background: rgba(255, 252, 245, 0.58);
     z-index: 2;
     padding: 6px;
@@ -1094,4 +1094,8 @@ body {
 
 .modal_backdrop {
     z-index: 3 !important;
+}
+
+.room-main-link {
+    padding: 4px;
 }

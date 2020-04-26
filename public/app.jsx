@@ -962,6 +962,7 @@ class Game extends React.Component {
                                 <i className="settings-hover-button material-icons">settings</i>
                                 <input id="avatar-input" type="file" onChange={evt => this.handleSetAvatar(evt)}/>
                             </div>
+                            <CommonRoom state={this.state}/>
                         </div>
                     </div>
                 );
