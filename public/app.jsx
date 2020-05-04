@@ -922,8 +922,9 @@ class Game extends React.Component {
                                     </div>
                                 </div>) : ""}
                                 <div className="side-buttons">
-                                    <i onClick={() => this.socket.emit("set-room-mode", false)}
-                                       className="material-icons exit settings-button">store</i>
+                                    {this.state.userId === this.state.hostId ?
+                                        <i onClick={() => this.socket.emit("set-room-mode", false)}
+                                           className="material-icons exit settings-button">store</i> : ""}
                                     <i onClick={() => this.openRules()}
                                        className="material-icons settings-button">help_outline</i>
                                     {(isHost && data.paused) ? (!data.timed
