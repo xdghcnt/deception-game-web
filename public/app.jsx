@@ -384,6 +384,7 @@ class Game extends React.Component {
                 else if (this.state.currentPerson !== this.state.userSlot && state.currentPerson === this.state.userSlot)
                     this.voiceActiveSound.play();
             }
+            CommonRoom.processCommonRoom(state, this.state);
             this.setState(Object.assign(state, {
                 userId: this.userId,
                 userSlot: ~state.playerSlots.indexOf(this.userId)
@@ -527,7 +528,7 @@ class Game extends React.Component {
         if (input.files && input.files[0]) {
             const
                 file = input.files[0],
-                uri = "/deception/upload-avatar",
+                uri = "/common/upload-avatar",
                 xhr = new XMLHttpRequest(),
                 fd = new FormData(),
                 fileSize = ((file.size / 1024) / 1024).toFixed(4); // MB
@@ -921,8 +922,8 @@ class Game extends React.Component {
                                     </div>
                                 </div>) : ""}
                                 <div className="side-buttons">
-                                    <i onClick={() => window.location = parentDir}
-                                       className="material-icons exit settings-button">exit_to_app</i>
+                                    <i onClick={() => this.socket.emit("set-room-mode", false)}
+                                       className="material-icons exit settings-button">home</i>
                                     <i onClick={() => this.openRules()}
                                        className="material-icons settings-button">help_outline</i>
                                     {(isHost && data.paused) ? (!data.timed
@@ -962,7 +963,7 @@ class Game extends React.Component {
                                 <i className="settings-hover-button material-icons">settings</i>
                                 <input id="avatar-input" type="file" onChange={evt => this.handleSetAvatar(evt)}/>
                             </div>
-                            <CommonRoom state={this.state}/>
+                            <CommonRoom state={this.state} app={this}/>
                         </div>
                     </div>
                 );

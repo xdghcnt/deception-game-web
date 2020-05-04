@@ -1100,3 +1100,8 @@ body {
     padding: 4px;
     z-index: 1;
 }
+
+.room-mode-dialog {
+    backdrop-filter: blur(14px);
+    z-index: 2;
+}
