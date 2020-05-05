@@ -1027,6 +1027,10 @@ body {
         margin-left: 0;
     }
 
+    .want-master-section {
+        top: 238px;
+    }
+
     .bottom-panel {
         height: 125px;
         flex-wrap: wrap;
@@ -1047,7 +1051,7 @@ body {
 .help-panel {
     position: fixed;
     left: 0;
-    bottom: 0;
+    top: 42px;
     background: rgba(255, 252, 245, 0.58);
     z-index: 2;
     padding: 6px;
@@ -1083,7 +1087,7 @@ body {
 
 .want-master-section {
     position: fixed;
-    top: 55px;
+    top: 88px;
     background: rgba(255, 252, 245, 0.58);
     padding: 6px;
     left: 0;
