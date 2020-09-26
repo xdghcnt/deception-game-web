@@ -48,6 +48,7 @@ function init(wsServer, path) {
                     playerShot: null,
                     cards: [],
                     crimeWin: null,
+                    managedVoice: true,
                     testMode
                 },
                 state = {
@@ -75,7 +76,24 @@ function init(wsServer, path) {
             this.lastInteraction = new Date();
             const
                 send = (target, event, data) => userRegistry.send(target, event, data),
-                update = () => send(room.onlinePlayers, "state", room),
+                update = () => {
+                    if (room.voiceEnabled)
+                        processUserVoice();
+                    send(room.onlinePlayers, "state", room);
+                },
+                processUserVoice = () => {
+                    room.userVoice = {};
+                    room.onlinePlayers.forEach((user) => {
+                        if (!room.managedVoice || !room.teamsLocked || room.phase === 0)
+                            room.userVoice[user] = true;
+                        else {
+                            if (room.phase === 5 && (room.playerSlots[state.murderer] === user || room.playerSlots[state.assistant] === user))
+                                room.userVoice[user] = true;
+                            else if (room.phase !== 5 && room.playerSlots[state.master] !== user)
+                                room.userVoice[user] = true;
+                        }
+                    });
+                },
                 sendState = (user) => {
                     const slot = room.playerSlots.indexOf(user);
                     if (room.phase === 0 || room.master === slot)
@@ -346,6 +364,7 @@ function init(wsServer, path) {
                         registry.log(error.message);
                     }
                 };
+            this.updatePublicState = update;
             this.userJoin = userJoin;
             this.userLeft = userLeft;
             this.userEvent = userEvent;
@@ -457,6 +476,7 @@ function init(wsServer, path) {
                 }
             };
             this.userEventHandlers = {
+                ...this.eventHandlers,
                 "update-avatar": (user, id) => {
                     room.playerAvatars[user] = id;
                     update()

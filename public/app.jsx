@@ -21,6 +21,7 @@ class Player extends React.Component {
                  data-playerId={id}
                  onTouchStart={(e) => e.target.focus()}>
                 <div className={cs("player-name-text", `bg-color-${this.props.slot}`)}>
+                    <UserAudioMarker data={data} user={id}/>
                     {hasPlayer
                         ? data.playerNames[id]
                         : (data.teamsLocked
@@ -344,6 +345,7 @@ class PlayerSlot extends React.Component {
 
 class Game extends React.Component {
     componentDidMount() {
+        this.gameName = "deception";
         const initArgs = {};
         if (!localStorage.deceptionUserId || !localStorage.deceptionUserToken) {
             while (!localStorage.userName)
@@ -355,7 +357,7 @@ class Game extends React.Component {
             history.replaceState(undefined, undefined, location.origin + location.pathname + "#" + makeId());
         else
             history.replaceState(undefined, undefined, location.origin + location.pathname + location.hash);
-        initArgs.roomId = location.hash.substr(1);
+        initArgs.roomId = this.roomId = location.hash.substr(1);
         initArgs.userId = this.userId = localStorage.deceptionUserId;
         initArgs.token = this.userToken = localStorage.deceptionUserToken;
         initArgs.userName = localStorage.userName;
