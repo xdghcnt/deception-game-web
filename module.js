@@ -1,15 +1,14 @@
 function init(wsServer, path) {
     const
         fs = require("fs"),
-        express = require("express"),
         app = wsServer.app,
         registry = wsServer.users,
         channel = "deception",
         testMode = process.argv[2] === "debug";
 
-    app.use("/deception", express.static(`${__dirname}/public`));
+    app.use("/deception", wsServer.static(`${__dirname}/public`));
     if (registry.config.appDir)
-        app.use("/deception", express.static(`${registry.config.appDir}/public`));
+        app.use("/deception", wsServer.static(`${registry.config.appDir}/public`));
 
     registry.handleAppPage(path, `${__dirname}/public/app.html`);
 
