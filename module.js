@@ -48,8 +48,8 @@ function init(wsServer, path) {
                     cards: [],
                     crimeWin: null,
                     managedVoice: true,
-                    cardsSize: 5,
-                    nextGameCardsSize: 5,
+                    cardsSize: 4,
+                    nextGameCardsSize: 4,
                     testMode
                 },
                 state = {
