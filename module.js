@@ -48,6 +48,8 @@ function init(wsServer, path) {
                     cards: [],
                     crimeWin: null,
                     managedVoice: true,
+                    cardsSize: 5,
+                    nextGameCardsSize: 5,
                     testMode
                 },
                 state = {
@@ -119,6 +121,7 @@ function init(wsServer, path) {
                 startGame = () => {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 3) {
+                        room.cardsSize = room.nextGameCardsSize;
                         room.phase = 1;
                         room.round = 1;
                         room.teamsLocked = true;
@@ -143,27 +146,27 @@ function init(wsServer, path) {
                         room.reconTiles = [3, 4, 5, 6, 7, 2];
                         room.reconBullets = {};
                         room.cards = {};
-                        if (deckState.weapon.length < playersCount * 4)
+                        if (deckState.weapon.length < playersCount * room.cardsSize)
                             deckState.weapon = shuffleArray(Array(90).fill(null).map((v, index) => index));
-                        if (deckState.clue.length < playersCount * 4)
+                        if (deckState.clue.length < playersCount * room.cardsSize)
                             deckState.clue = shuffleArray(Array(200).fill(null).map((v, index) => index));
                         room.cards = room.playerSlots.map((user, slot) =>
                             user !== null && slot !== room.master ? {
-                                weapons: deckState.weapon.splice(0, 4),
-                                clues: deckState.clue.splice(0, 4),
-                                weaponsMarked: Array(4).fill(null).map(() => []),
-                                cluesMarked: Array(4).fill(null).map(() => []),
-                                weaponsSelected: Array(4).fill(null).map(() => []),
-                                cluesSelected: Array(4).fill(null).map(() => []),
+                                weapons: deckState.weapon.splice(0, room.cardsSize),
+                                clues: deckState.clue.splice(0, room.cardsSize),
+                                weaponsMarked: Array(room.cardsSize).fill(null).map(() => []),
+                                cluesMarked: Array(room.cardsSize).fill(null).map(() => []),
+                                weaponsSelected: Array(room.cardsSize).fill(null).map(() => []),
+                                cluesSelected: Array(room.cardsSize).fill(null).map(() => []),
                                 hasBadge: true
                             } : null
                         );
                         state.crimePlan = room.playerSlots.map((user) =>
                             user !== null && user !== room.master ? {
-                                weaponsMarked: Array(4).fill(null).map(() => []),
-                                cluesMarked: Array(4).fill(null).map(() => []),
-                                weaponsSelected: Array(4).fill(null).map(() => []),
-                                cluesSelected: Array(4).fill(null).map(() => [])
+                                weaponsMarked: Array(room.cardsSize).fill(null).map(() => []),
+                                cluesMarked: Array(room.cardsSize).fill(null).map(() => []),
+                                weaponsSelected: Array(room.cardsSize).fill(null).map(() => []),
+                                cluesSelected: Array(room.cardsSize).fill(null).map(() => [])
                             } : null
                         );
                         startTimer();
@@ -234,8 +237,7 @@ function init(wsServer, path) {
                         room.currentPerson = null;
                         addReconTile();
                         startCommon();
-                    }
-                    else
+                    } else
                         endGame();
                 },
                 getSelectedCard = (slot, type, deselect) => {
@@ -288,8 +290,7 @@ function init(wsServer, path) {
                                             room.cards[newMasterSlot] = null;
                                             room.time = room.masterTime * 1000;
                                         } else endGame();
-                                    }
-                                    else if (room.phase === 3)
+                                    } else if (room.phase === 3)
                                         startPerson();
                                     else if (room.phase === 4)
                                         nextPerson();
@@ -369,7 +370,7 @@ function init(wsServer, path) {
             this.userEvent = userEvent;
             this.slotEventHandlers = {
                 "select-card": (slot, cardSlot, type, id) => {
-                    if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && ~[0, 1, 2, 3].indexOf(id)) {
+                    if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && (id >= 0 && id < room.cardsSize)) {
                         if ((room.phase !== 1 && room.cards[slot].hasBadge)
                             || (room.phase === 1 && ~[state.murderer, state.assistant].indexOf(slot) && cardSlot === state.murderer)) {
                             const currentCard = getSelectedCard(slot, type, true);
@@ -383,7 +384,7 @@ function init(wsServer, path) {
                     }
                 },
                 "mark-card": (slot, cardSlot, type, id, color) => {
-                    if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && ~[0, 1, 2, 3].indexOf(id)
+                    if (room.cards[cardSlot] && ~["weapons", "clues"].indexOf(type) && (id >= 0 && id < room.cardsSize)
                         && ((room.phase !== 1 && !color && room.master !== slot)
                             || (color >= 0 && color < room.playerSlots.length && ~[state.murderer, state.assistant].indexOf(slot)))) {
                         color = color === undefined ? slot : color;
@@ -567,9 +568,13 @@ function init(wsServer, path) {
                     }
                     update();
                 },
-                "set-time": (user, type, value) => {
-                    if (user === room.hostId && ~["crime", "master", "common", "person", "witness"].indexOf(type) && !isNaN(parseInt(value)))
-                        room[`${type}Time`] = parseFloat(value);
+                "set-param": (user, type, value) => {
+                    if (user === room.hostId) {
+                        if (~["crime", "master", "common", "person", "witness"].indexOf(type) && !isNaN(parseInt(value)))
+                            room[`${type}Time`] = parseFloat(value);
+                        else if (type === "cards-size" && value >= 4 && value <= 6)
+                            room.nextGameCardsSize = value
+                    }
                     update();
                 }
             };

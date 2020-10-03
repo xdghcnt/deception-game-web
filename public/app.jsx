@@ -186,8 +186,8 @@ class PlayerSlot extends React.Component {
                 wantSpeech = ~data.speechPlayers.indexOf(slot),
                 currentPerson = data.currentPerson === slot,
                 cards = data.cards[slot] ? data.cards[slot] : {
-                    weapons: [null, null, null, null],
-                    clues: [null, null, null, null]
+                    weapons: Array(data.nextGameCardsSize).fill(null),
+                    clues: Array(data.nextGameCardsSize).fill(null)
                 },
                 cardData = ((data.player && data.player.crimePlan) ? data.player.crimePlan[slot] : data.cards[slot]) || {
                     weaponsSelected: [],
@@ -311,7 +311,10 @@ class PlayerSlot extends React.Component {
                         </div>
                     </div>
                     {slot !== data.master || (data.phase === 0 && !data.teamsLocked) ? (<div className="player-cards">
-                        <div className="player-cards-background"/>
+                        <div
+                            className={`player-cards-background player-cards-background-${data.phase === 0
+                                ? data.nextGameCardsSize
+                                : data.cardsSize}`}/>
                         <div className="player-cards-weapons">
                             {cards.weapons.map((card, id) => <Card cardId={id} card={card} data={data}
                                                                    slot={slot}
@@ -461,8 +464,8 @@ class Game extends React.Component {
         }, 50);
     }
 
-    handleChangeTime(value, type) {
-        this.debouncedEmit("set-time", type, value);
+    handleChangeParam(value, type) {
+        this.debouncedEmit("set-param", type, value);
     }
 
     handleRemovePlayer(id, evt) {
@@ -886,7 +889,7 @@ class Game extends React.Component {
                                                                                   value={this.state.crimeTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
-                                                                                      && this.handleChangeTime(evt.target.valueAsNumber, "crime")}
+                                                                                      && this.handleChangeParam(evt.target.valueAsNumber, "crime")}
                                                 />) : (<span className="value">{this.state.crimeTime}</span>)}
                                             </div>
                                             <div className="set-team-time"><i title="Фаза реконструкции"
@@ -896,7 +899,7 @@ class Game extends React.Component {
                                                                                   value={this.state.masterTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
-                                                                                      && this.handleChangeTime(evt.target.valueAsNumber, "master")}
+                                                                                      && this.handleChangeParam(evt.target.valueAsNumber, "master")}
                                                 />) : (<span className="value">{this.state.masterTime}</span>)}
                                             </div>
                                             <div className="set-add-time"><i title="Фаза обсуждения"
@@ -906,7 +909,7 @@ class Game extends React.Component {
                                                                                   value={this.state.commonTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
-                                                                                      && this.handleChangeTime(evt.target.valueAsNumber, "common")}
+                                                                                      && this.handleChangeParam(evt.target.valueAsNumber, "common")}
                                                 />) : (<span className="value">{this.state.commonTime}</span>)}
                                             </div>
                                             <div className="set-add-time"><i
@@ -917,8 +920,20 @@ class Game extends React.Component {
                                                                                   value={this.state.personTime}
                                                                                   min="0"
                                                                                   onChange={evt => !isNaN(evt.target.valueAsNumber)
-                                                                                      && this.handleChangeTime(evt.target.valueAsNumber, "person")}
+                                                                                      && this.handleChangeParam(evt.target.valueAsNumber, "person")}
                                                 />) : (<span className="value">{this.state.personTime}</span>)}
+                                            </div>
+                                            <div className="set-cards-size"><i
+                                                title="Количество карт"
+                                                className="material-icons">filter_none</i>
+                                                {(isHost && !inProcess) ? (<input id="cards-size"
+                                                                                  type="number"
+                                                                                  value={this.state.nextGameCardsSize}
+                                                                                  min="4"
+                                                                                  max="6"
+                                                                                  onChange={evt => !isNaN(evt.target.valueAsNumber)
+                                                                                      && this.handleChangeParam(evt.target.valueAsNumber, "cards-size")}
+                                                />) : (<span className="value">{this.state.nextGameCardsSize}</span>)}
                                             </div>
                                         </div>
                                     </div>

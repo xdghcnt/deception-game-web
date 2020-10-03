@@ -340,7 +340,18 @@ body {
     bottom: -13px;
     left: -20px;
     right: -20px;
-    background: url(cards-background.png);
+}
+
+.player-cards-background-4 {
+    background: url(cards-background-4.png);
+}
+
+.player-cards-background-5 {
+    background: url(cards-background-5.png);
+}
+
+.player-cards-background-6 {
+    background: url(cards-background-6.png);
 }
 
 .player-want-speech {
