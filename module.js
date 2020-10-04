@@ -50,6 +50,7 @@ function init(wsServer, path) {
                     managedVoice: true,
                     cardsSize: 4,
                     nextGameCardsSize: 4,
+                    simpleLocations: false,
                     testMode
                 },
                 state = {
@@ -143,7 +144,7 @@ function init(wsServer, path) {
                             state.assistant = getRandomPlayer([room.master, state.murderer]);
                             state.witness = getRandomPlayer([room.master, state.murderer, state.assistant]);
                         }
-                        room.reconTiles = [3, 4, 5, 6, 7, 2];
+                        room.reconTiles = !room.simpleLocations ? [3, 4, 5, 6, 7, 2] : [3, 8, 2, 2, 2, 2];
                         room.reconBullets = {};
                         room.cards = {};
                         if (deckState.weapon.length < playersCount * room.cardsSize)
@@ -176,8 +177,8 @@ function init(wsServer, path) {
                     room.phase = 2;
                     state.crimePlan = null;
                     room.crimeWin = true;
-                    deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 8));
-                    room.reconTiles = [3, 4].concat(deckState.recon.splice(0, 4));
+                    deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 9));
+                    room.reconTiles = [3, !room.simpleLocations ? 4 : 8].concat(deckState.recon.splice(0, 4));
                     startTimer();
                     update();
                     updateState();
@@ -421,7 +422,7 @@ function init(wsServer, path) {
                     update();
                 },
                 "change-location-tile": (slot) => {
-                    if (slot === room.master && room.reconBullets[1] === undefined) {
+                    if (slot === room.master && room.reconBullets[1] === undefined && !room.simpleLocations) {
                         room.reconTiles[1]++;
                         if (room.reconTiles[1] === 8)
                             room.reconTiles[1] = 4;
@@ -560,6 +561,11 @@ function init(wsServer, path) {
                             room.personTime = 240;
                         }
                     }
+                    update();
+                },
+                "toggle-simple-locations": (user) => {
+                    if (user === room.hostId)
+                        room.simpleLocations = !room.simpleLocations;
                     update();
                 },
                 "abort-game": (user) => {

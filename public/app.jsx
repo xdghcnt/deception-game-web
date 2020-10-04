@@ -161,7 +161,7 @@ class ReconTile extends React.Component {
                          onClick={() => props.game.handleSwapReconTile(props.tileId)}>
                         <i className="material-icons">repeat</i>
                     </div>) : ""}
-                {isMaster && props.tileId === 1 && unselected ? (
+                {isMaster && props.tileId === 1 && unselected && !props.data.simpleLocations ? (
                     <div className="recon-tile-change-location-button"
                          onClick={(evt) => !evt.stopPropagation() && props.game.handleChangeLocationTile()}>
                         <i className="material-icons">filter_none</i>
@@ -491,6 +491,10 @@ class Game extends React.Component {
 
     handleClickTogglePause() {
         this.socket.emit("toggle-pause");
+    }
+
+    handleToggleSimpleLocations() {
+        this.socket.emit("toggle-simple-locations");
     }
 
     handleToggleTimed() {
@@ -958,6 +962,12 @@ class Game extends React.Component {
                                                   className="material-icons start-game settings-button">record_voice_over</i>)
                                             : (<i onClick={() => this.handleToggleSpeechMode()}
                                                   className="material-icons start-game settings-button">voice_over_off</i>)) : ""}
+                                    {(isHost && data.phase === 0)
+                                        ? (data.simpleLocations
+                                            ? (<i onClick={() => this.handleToggleSimpleLocations()}
+                                                  className="material-icons start-game settings-button">location_off</i>)
+                                            : (<i onClick={() => this.handleToggleSimpleLocations()}
+                                                  className="material-icons start-game settings-button">location_on</i>)) : ""}
                                     {(isHost && data.paused) ? (data.teamsLocked
                                         ? (<i onClick={() => this.handleToggleTeamLockClick()}
                                               className="material-icons start-game settings-button">lock_outline</i>)
