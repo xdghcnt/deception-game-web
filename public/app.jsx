@@ -444,7 +444,7 @@ class Game extends React.Component {
         this.reconSound = new Audio("/deception/recon-phase.wav");
         this.reconSound.volume = 0.5;
         this.voiceActiveSound = new Audio("/deception/voice-active.wav");
-        this.nightSound = new Audio("/deception/night.ogg");
+        this.nightSound = new Audio("/deception/night.mp3");
         this.timerSound = new Audio("/deception/tick.mp3");
         this.timerSound.volume = 0.5;
         this.seconds = this.minutes = this.prevSeconds = this.prevMinutes = "00";
