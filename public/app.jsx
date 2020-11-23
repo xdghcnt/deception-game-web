@@ -559,9 +559,7 @@ class Game extends React.Component {
     }
 
     toggleWantMaster() {
-        if (~this.state.spectators.indexOf(this.state.userId))
-            popup.alert({content: "Сначала займите игровой слот"});
-        else if (this.state.prevMaster === this.state.userId)
+        if (this.state.prevMaster === this.state.userId)
             popup.alert({content: "Вы уже были Криминалистом в прошлый раз"});
         else
             this.socket.emit("toggle-want-master");
@@ -872,7 +870,7 @@ class Game extends React.Component {
                                             handleRemovePlayer={(id, evt) => this.handleRemovePlayer(id, evt)}
                                             handleGiveHost={(id, evt) => this.handleGiveHost(id, evt)}/>
                             </div>
-                            {data.phase === 0 ? (
+                            {data.phase === 0 && !data.spectators.includes(data.userId) ? (
                                 <div className="want-master-section" onClick={() => this.toggleWantMaster()}>
                                     <div className="want-master-title">Хочу слот Криминалиста:</div>
                                     <div className="want-master-list">
