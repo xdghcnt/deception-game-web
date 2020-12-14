@@ -389,7 +389,11 @@ class Game extends React.Component {
                 else if (this.state.currentPerson !== this.state.userSlot && state.currentPerson === this.state.userSlot)
                     this.voiceActiveSound.play();
             }
-            CommonRoom.processCommonRoom(state, this.state);
+            CommonRoom.processCommonRoom(state, this.state, {
+                maxPlayers: 12,
+                largeImageKey: "deception",
+                details: "Deception"
+            });
             this.setState(Object.assign(state, {
                 userId: this.userId,
                 userSlot: ~state.playerSlots.indexOf(this.userId)
