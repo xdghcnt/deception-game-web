@@ -161,7 +161,9 @@ class ReconTile extends React.Component {
                          onClick={() => props.game.handleSwapReconTile(props.tileId)}>
                         <i className="material-icons">repeat</i>
                     </div>) : ""}
-                {isMaster && props.tileId === 1 && unselected && !props.data.simpleLocations ? (
+                {(isMaster || props.data.phase === 1) && props.tileId === 1
+                && props.data.reconBullets[props.tileId] === undefined
+                && !props.data.simpleLocations ? (
                     <div className="recon-tile-change-location-button"
                          onClick={(evt) => !evt.stopPropagation() && props.game.handleChangeLocationTile()}>
                         <i className="material-icons">filter_none</i>
@@ -603,7 +605,14 @@ class Game extends React.Component {
     }
 
     handleChangeLocationTile() {
-        this.socket.emit("change-location-tile");
+        if (this.state.userSlot === this.state.master)
+            this.socket.emit("change-location-tile");
+        else {
+            this.state.reconTiles[1]++;
+            if (this.state.reconTiles[1] === 8)
+                this.state.reconTiles[1] = 4;
+            this.setState(this.state);
+        }
     }
 
     handleChangeColor() {

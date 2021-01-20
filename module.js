@@ -123,6 +123,8 @@ function init(wsServer, path) {
                 startGame = () => {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 3) {
+                        deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 9));
+                        room.reconTiles = [3, !room.simpleLocations ? 4 : 8].concat(deckState.recon.splice(0, 4));
                         room.cardsSize = room.nextGameCardsSize;
                         room.phase = 1;
                         room.round = 1;
@@ -145,7 +147,6 @@ function init(wsServer, path) {
                             state.assistant = getRandomPlayer([room.master, state.murderer]);
                             state.witness = getRandomPlayer([room.master, state.murderer, state.assistant]);
                         }
-                        room.reconTiles = !room.simpleLocations ? [3, 4, 5, 6, 7, 2] : [3, 8, 2, 2, 2, 2];
                         room.reconBullets = {};
                         room.cards = {};
                         if (deckState.weapon.length < playersCount * room.cardsSize)
@@ -178,8 +179,6 @@ function init(wsServer, path) {
                     room.phase = 2;
                     state.crimePlan = null;
                     room.crimeWin = true;
-                    deckState.recon = shuffleArray(Array(21).fill(null).map((v, index) => index + 9));
-                    room.reconTiles = [3, !room.simpleLocations ? 4 : 8].concat(deckState.recon.splice(0, 4));
                     startTimer();
                     update();
                     updateState();
