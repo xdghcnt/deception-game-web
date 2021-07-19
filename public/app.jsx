@@ -503,6 +503,10 @@ class Game extends React.Component {
         this.socket.emit("toggle-simple-locations");
     }
 
+    handleToggleDisableWitness() {
+        this.socket.emit("toggle-disable-witness");
+    }
+
     handleToggleTimed() {
         this.socket.emit("toggle-timed");
     }
@@ -978,6 +982,12 @@ class Game extends React.Component {
                                                   className="material-icons start-game settings-button">location_off</i>)
                                             : (<i onClick={() => this.handleToggleSimpleLocations()}
                                                   className="material-icons start-game settings-button">location_on</i>)) : ""}
+                                    {(isHost && data.phase === 0)
+                                        ? (!data.disableWitness
+                                            ? (<i onClick={() => this.handleToggleDisableWitness()}
+                                                  className="material-icons start-game settings-button">visibility</i>)
+                                            : (<i onClick={() => this.handleToggleDisableWitness()}
+                                                  className="material-icons start-game settings-button">visibility_off</i>)) : ""}
                                     {(isHost && data.paused) ? (data.teamsLocked
                                         ? (<i onClick={() => this.handleToggleTeamLockClick()}
                                               className="material-icons start-game settings-button">lock_outline</i>)

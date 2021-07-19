@@ -52,6 +52,7 @@ function init(wsServer, path) {
                     cardsSize: 4,
                     nextGameCardsSize: 4,
                     simpleLocations: false,
+                    disableWitness: false,
                     testMode
                 },
                 state = {
@@ -143,7 +144,7 @@ function init(wsServer, path) {
                         state.weapon = null;
                         state.clue = null;
                         state.murderer = getRandomPlayer([room.master]);
-                        if (playersCount > 5) {
+                        if (playersCount > 5 && !room.disableWitness) {
                             state.assistant = getRandomPlayer([room.master, state.murderer]);
                             state.witness = getRandomPlayer([room.master, state.murderer, state.assistant]);
                         }
@@ -566,6 +567,11 @@ function init(wsServer, path) {
                 "toggle-simple-locations": (user) => {
                     if (user === room.hostId)
                         room.simpleLocations = !room.simpleLocations;
+                    update();
+                },
+                "toggle-disable-witness": (user) => {
+                    if (user === room.hostId)
+                        room.disableWitness = !room.disableWitness;
                     update();
                 },
                 "abort-game": (user) => {
