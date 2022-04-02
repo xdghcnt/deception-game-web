@@ -1120,3 +1120,7 @@ body {
     backdrop-filter: blur(14px);
     z-index: 2;
 }
+
+.konfa-menu img {
+    filter: brightness(0.1) !important;
+}
