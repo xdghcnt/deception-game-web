@@ -1124,3 +1124,15 @@ body {
 .konfa-menu img {
     filter: brightness(0.1) !important;
 }
+
+.chat-send-input {
+    color: black !important;
+}
+
+.chat.active .chat-messages {
+    color: black;
+}
+
+.chat-messages {
+    color: white;
+}
