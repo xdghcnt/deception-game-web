@@ -13,8 +13,8 @@ function init(wsServer, path) {
     registry.handleAppPage(path, `${__dirname}/public/app.html`);
 
     class GameState extends wsServer.users.RoomState {
-        constructor(hostId, hostData, userRegistry) {
-            super(hostId, hostData, userRegistry);
+        constructor(hostId, hostData, userRegistry, registry) {
+            super(hostId, hostData, userRegistry, registry.games.deception.id, path);
             const
                 room = {
                     ...this.room,
@@ -314,6 +314,20 @@ function init(wsServer, path) {
                     if (!isEnoughPlayers())
                         room.teamsLocked = false;
                     room.prevMaster = room.playerSlots[room.master] || null;
+                    const winPlayers = [];
+                    if (room.crimeWin) {
+                        winPlayers.push(state.murderer);
+                        winPlayers.push(state.assistant);
+                    } else {
+                        winPlayers.push(...room.playerSlots.filter((user, index) => [state.murderer, state.assistant, null].includes(index)))
+                    }
+                    if (winPlayers.length) {
+                        for (const slot of winPlayers.filter((slot) => room.playerSlots[slot])) {
+                            const userData = {room, user: room.playerSlots[slot]}
+                            registry.authUsers.processAchievement(userData, registry.achievements.win100Deception.id);
+                            registry.authUsers.processAchievement(userData, registry.achievements.winGames.id, {game: registry.games.deception.id});
+                        }
+                    }
                     update();
                     updateState();
                 },
@@ -488,11 +502,6 @@ function init(wsServer, path) {
                         room.teamsLocked = !room.teamsLocked;
                     update();
                 },
-                "change-name": (user, value) => {
-                    if (value)
-                        room.playerNames[user] = value.substr && value.substr(0, 60);
-                    update();
-                },
                 "remove-player": (user, playerId) => {
                     if (playerId && user === room.hostId)
                         removePlayer(playerId);
@@ -657,7 +666,7 @@ function init(wsServer, path) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    registry.createRoomManager(path, channel, GameState);
+    registry.createRoomManager(path, GameState);
 }
 
 module.exports = init;

@@ -23,7 +23,7 @@ class Player extends React.Component {
                 <div className={cs("player-name-text", `bg-color-${this.props.slot}`)}>
                     <UserAudioMarker data={data} user={id}/>
                     {hasPlayer
-                        ? data.playerNames[id]
+                        ? <PlayerName data={data} id={id} />
                         : (data.teamsLocked
                             ? (<div className="slot-empty">Пусто</div>)
                             : (<div className="join-slot-button"
@@ -244,6 +244,7 @@ class PlayerSlot extends React.Component {
                 }
                 showActionButton = weaponSelectedSlot !== undefined && (weaponSelectedSlot === clueSelectedSlot);
             }
+            const avatar = window.commonRoom.getPlayerAvatarURL(player);
             return (
                 <div
                     className={cs("player-slot", `player-slot-${slot}`, {
@@ -256,9 +257,9 @@ class PlayerSlot extends React.Component {
                         <div className={cs("avatar", {"no-player": player === null})}
                              onTouchStart={(e) => e.target.focus()}
                              style={{
-                                 "background-image": player !== null ? `url(/deception/${data.playerAvatars[player]
-                                     ? `avatars/${player}/${data.playerAvatars[player]}.png`
-                                     : "default-user.png"})` : ""
+                                 "background-image": player !== null ? `url(${avatar
+                                     ? avatar
+                                     : "deception/default-user.png"})` : ""
                              }}>
                             <div className="player-role"
                                  style={{"background-position-x": roles.indexOf(role[0]) * -40}}
@@ -351,23 +352,8 @@ class PlayerSlot extends React.Component {
 class Game extends React.Component {
     componentDidMount() {
         this.gameName = "deception";
-        const initArgs = {};
-        if (!localStorage.deceptionUserId || !localStorage.deceptionUserToken) {
-            while (!localStorage.userName)
-                localStorage.userName = prompt("Your name");
-            localStorage.deceptionUserId = makeId();
-            localStorage.deceptionUserToken = makeId();
-        }
-        if (!location.hash)
-            history.replaceState(undefined, undefined, location.origin + location.pathname + "#" + makeId());
-        else
-            history.replaceState(undefined, undefined, location.origin + location.pathname + location.hash);
-        initArgs.roomId = this.roomId = location.hash.substr(1);
-        initArgs.userId = this.userId = localStorage.deceptionUserId;
-        initArgs.token = this.userToken = localStorage.deceptionUserToken;
-        initArgs.userName = localStorage.userName;
-        initArgs.wssToken = window.wssToken;
-        this.socket = window.socket.of("deception");
+        CommonRoom.roomInit(this);
+        const initArgs = CommonRoom.roomInit(this);
         this.socket.on("state", (state) => {
             if (!this.isMuted() && this.state.inited) {
                 if (this.state.playerShot == null && state.playerShot != null)
@@ -395,7 +381,7 @@ class Game extends React.Component {
                 maxPlayers: 12,
                 largeImageKey: "deception",
                 details: "Deception"
-            });
+            }, this);
             this.setState(Object.assign(state, {
                 userId: this.userId,
                 userSlot: ~state.playerSlots.indexOf(this.userId)
@@ -477,14 +463,14 @@ class Game extends React.Component {
     handleRemovePlayer(id, evt) {
         evt.stopPropagation();
         if (!this.state.testMode)
-            popup.confirm({content: `Removing ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
+            popup.confirm({content: `Removing ${window.commonRoom.getPlayerName(id)}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
         else
             this.socket.emit("remove-player", id);
     }
 
     handleGiveHost(id, evt) {
         evt.stopPropagation();
-        popup.confirm({content: `Give host ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("give-host", id));
+        popup.confirm({content: `Give host ${window.commonRoom.getPlayerName(id)}?`}, (evt) => evt.proceed && this.socket.emit("give-host", id));
     }
 
     handleToggleTeamLockClick() {
@@ -530,42 +516,12 @@ class Game extends React.Component {
     }
 
     handleClickChangeName() {
-        popup.prompt({content: "Новое имя", value: this.state.playerNames[this.state.userId] || ""}, (evt) => {
+        popup.prompt({content: "Новое имя", value: window.commonRoom.getPlayerName(this.state.userId) || ""}, (evt) => {
             if (evt.proceed && evt.input_value.trim()) {
                 this.socket.emit("change-name", evt.input_value.trim());
                 localStorage.userName = evt.input_value.trim();
             }
         });
-    }
-
-    handleClickSetAvatar() {
-        document.getElementById("avatar-input").click();
-    }
-
-    handleSetAvatar(event) {
-        const input = event.target;
-        if (input.files && input.files[0]) {
-            const
-                file = input.files[0],
-                uri = "/common/upload-avatar",
-                xhr = new XMLHttpRequest(),
-                fd = new FormData(),
-                fileSize = ((file.size / 1024) / 1024).toFixed(4); // MB
-            if (fileSize <= 5) {
-                xhr.open("POST", uri, true);
-                xhr.onreadystatechange = () => {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        localStorage.avatarId = xhr.responseText;
-                        this.socket.emit("update-avatar", localStorage.avatarId);
-                    } else if (xhr.readyState === 4 && xhr.status !== 200) popup.alert({content: "Ошибка загрузки"});
-                };
-                fd.append("avatar", file);
-                fd.append("userId", this.userId);
-                fd.append("userToken", this.userToken);
-                xhr.send(fd);
-            } else
-                popup.alert({content: "Файл не должен занимать больше 5Мб"});
-        }
     }
 
     toggleWantMaster() {
@@ -655,6 +611,10 @@ class Game extends React.Component {
             void el.offsetHeight;
             el.classList.add("flip");
         }
+    }
+
+    handleClickSetAvatar() {
+        window.commonRoom.handleClickSetImage('avatar');
     }
 
     isMuted() {
@@ -766,6 +726,7 @@ class Game extends React.Component {
                         .map((value, slot) => showEmptySlots ? slot : value);
                 return (
                     <div className={cs("game", {isMaster})}>
+                        <CommonRoom state={this.state} app={this}/>
                         <div
                             className={cs("background-list", `phase-${data.phase}`, {
                                 [`crime-win-${data.crimeWin ? "true" : "false"}`]: isSomebodyWin,
@@ -892,7 +853,7 @@ class Game extends React.Component {
                                     <div className="want-master-title">Хочу слот Криминалиста:</div>
                                     <div className="want-master-list">
                                         {data.wantMasterList.length ? data.wantMasterList.map((it) => (<div>
-                                            {data.playerNames[it]}
+                                            <PlayerName data={data} id={it} />
                                         </div>)) : "..."}
                                     </div>
                                 </div>) : ""}
@@ -1009,9 +970,7 @@ class Game extends React.Component {
                                               className="toggle-theme material-icons settings-button">volume_off</i>)}
                                 </div>
                                 <i className="settings-hover-button material-icons">settings</i>
-                                <input id="avatar-input" type="file" onChange={evt => this.handleSetAvatar(evt)}/>
                             </div>
-                            <CommonRoom state={this.state} app={this}/>
                         </div>
                     </div>
                 );
