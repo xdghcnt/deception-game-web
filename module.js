@@ -319,7 +319,9 @@ function init(wsServer, path) {
                         winPlayers.push(state.murderer);
                         winPlayers.push(state.assistant);
                     } else {
-                        winPlayers.push(...room.playerSlots.filter((user, index) => [state.murderer, state.assistant, null].includes(index)))
+                        winPlayers.push(...room.playerSlots.map((item, index) => index).filter((user, index) =>
+                            room.playerSlots[index]
+                            && ![state.murderer, state.assistant].includes(index)))
                     }
                     if (winPlayers.length) {
                         for (const slot of winPlayers.filter((slot) => room.playerSlots[slot])) {
